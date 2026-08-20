@@ -192,9 +192,10 @@ Cuando un usuario solicita, por ejemplo, `GET /api2/202303204/call-api1`:
 | Registro Zot accesible | Completado - Confirmado con push/pull cruzado |
 | APIs en Go (API1, API2, API3) | Completado - Codigo desarrollado, compila correctamente |
 | Dockerfiles | Completados - Multi-stage, golang:1.23-alpine |
-| Build de imagenes | Pendiente |
-| Push de imagenes al registro | Pendiente |
-| Comunicacion cruzada entre APIs | Pendiente |
+| Build de imagenes | Completado - 3 imagenes construidas en host |
+| Push de imagenes al registro | Completado - 3 imagenes subidas a Zot |
+| Pull + run en VMs | Completado - Contenedores corriendo en VM1 y VM2 |
+| Comunicacion cruzada entre APIs | Completada - 9 endpoints probados exitosamente |
 | Documentacion tecnica / manual | Pendiente |
 | Repo GitHub privado + colaboradores | Pendiente |
 
@@ -218,13 +219,13 @@ Cuando un usuario solicita, por ejemplo, `GET /api2/202303204/call-api1`:
 
 ### 5.3 Proximos Pasos
 
-1. Prender las 3 VMs y conectar por SSH
-2. Build de imagenes con nerdctl (VM1) y podman (VM2)
-3. Push de las 3 imagenes al registro Zot (VM3)
-4. Pull + run de contenedores en VM1 y VM2
-5. Probar comunicacion cruzada real entre APIs
-6. Documentacion tecnica (manual + guia + diagrama + evidencia)
-7. Configurar repo GitHub con colaboradores
+1. ~~Prender las 3 VMs y conectar por SSH~~
+2. ~~Build de imagenes en host con Docker~~
+3. ~~Push de las 3 imagenes al registro Zot (VM3)~~
+4. ~~Pull + run de contenedores en VM1 y VM2~~
+5. ~~Probar comunicacion cruzada real entre APIs~~
+6. **Pendiente** - Documentacion tecnica (manual + guia + diagrama + evidencia)
+7. **Pendiente** - Configurar repo GitHub con colaboradores
 
 ---
 

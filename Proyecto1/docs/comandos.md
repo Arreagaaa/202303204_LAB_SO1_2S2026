@@ -13,7 +13,7 @@ git config --global user.email "tu-email@usac.com"
 git config --global user.name "Javier"
 ```
 
-### Build de imagenes Docker (pendiente)
+### Build de imagenes Docker
 
 ```bash
 # Navegar al directorio del proyecto
@@ -23,8 +23,30 @@ cd ~/Documentos/USAC/2S2026/SOPES1/LAB/202303204_LAB_SO1_2S2026/Proyecto1
 docker build -t 192.0.2.13:5000/api1-202303204:latest ./api1
 docker build -t 192.0.2.13:5000/api2-202303204:latest ./api2
 docker build -t 192.0.2.13:5000/api3-202303204:latest ./api3
+```
 
-# Push al registro Zot en VM3
+### Configuracion de daemon.json en host
+
+```bash
+# Configurar registro inseguro en el host
+sudo nano /etc/docker/daemon.json
+```
+
+Contenido:
+```json
+{
+  "insecure-registries": ["192.0.2.13:5000"]
+}
+```
+
+```bash
+# Reiniciar Docker
+sudo systemctl restart docker
+```
+
+### Push de imagenes al registro Zot
+
+```bash
 docker push 192.0.2.13:5000/api1-202303204:latest
 docker push 192.0.2.13:5000/api2-202303204:latest
 docker push 192.0.2.13:5000/api3-202303204:latest
@@ -106,16 +128,12 @@ sudo nerdctl --insecure-registry pull 192.0.2.13:5000/hello-world:test
 sudo nerdctl images
 ```
 
-### Proximos comandos (pendientes)
+### Pull y run de contenedores
 
 ```bash
-# Build de imagenes de APIs
-sudo nerdctl --insecure-registry build -t 192.0.2.13:5000/api1-202303204:latest ./api1
-sudo nerdctl --insecure-registry build -t 192.0.2.13:5000/api2-202303204:latest ./api2
-
-# Push al registro Zot
-sudo nerdctl --insecure-registry push 192.0.2.13:5000/api1-202303204:latest
-sudo nerdctl --insecure-registry push 192.0.2.13:5000/api2-202303204:latest
+# Descargar imagenes de APIs desde Zot
+sudo nerdctl --insecure-registry pull 192.0.2.13:5000/api1-202303204:latest
+sudo nerdctl --insecure-registry pull 192.0.2.13:5000/api2-202303204:latest
 
 # Correr contenedores
 sudo nerdctl --insecure-registry run -d --name api1 -p 8081:8081 192.0.2.13:5000/api1-202303204:latest
@@ -127,6 +145,34 @@ sudo nerdctl ps
 # Verificar logs
 sudo nerdctl logs api1
 sudo nerdctl logs api2
+```
+
+### Pruebas de endpoints
+
+```bash
+# Probar health de API1
+curl http://192.0.2.11:8081/health
+# Salida: {"status":"UP","message":"API1 is Ready","timestamp":"2026-08-20T01:09:19Z","VM":1,"carnet":"202303204"}
+
+# Probar health de API2
+curl http://192.0.2.11:8082/health
+# Salida: {"status":"UP","message":"API2 is Ready","timestamp":"2026-08-20T01:09:19Z","VM":1,"carnet":"202303204"}
+
+# Probar comunicacion API1 -> API2
+curl http://192.0.2.11:8081/api1/202303204/call-api2
+# Salida: {"apiname":"API2","message":"The API2 located on the VM1 is working","connection":true,"carnet":"202303204"}
+
+# Probar comunicacion API1 -> API3
+curl http://192.0.2.11:8081/api1/202303204/call-api3
+# Salida: {"apiname":"API3","message":"The API3 located on the VM2 is working","connection":true,"carnet":"202303204"}
+
+# Probar comunicacion API2 -> API1
+curl http://192.0.2.11:8082/api2/202303204/call-api1
+# Salida: {"apiname":"API1","message":"The API1 located on the VM1 is working","connection":true,"carnet":"202303204"}
+
+# Probar comunicacion API2 -> API3
+curl http://192.0.2.11:8082/api2/202303204/call-api3
+# Salida: {"apiname":"API3","message":"The API3 located on the VM2 is working","connection":true,"carnet":"202303204"}
 ```
 
 ---
@@ -172,23 +218,36 @@ podman pull 192.0.2.13:5000/hello-world:test
 podman images
 ```
 
-### Proximos comandos (pendientes)
+### Pull y run de contenedor
 
 ```bash
-# Build de imagen de API3
-podman build -t 192.0.2.13:5000/api3-202303204:latest ./api3
-
-# Push al registro Zot
-podman push 192.0.2.13:5000/api3-202303204:latest
+# Descargar imagen de API3 desde Zot
+podman pull 192.0.2.13:5000/api3-202303204:latest
 
 # Correr contenedor
 podman run -d --name api3 -p 8083:8083 192.0.2.13:5000/api3-202303204:latest
 
-# Verificar contenedores corriendo
+# Verificar contenedor corriendo
 podman ps
 
 # Verificar logs
 podman logs api3
+```
+
+### Pruebas de endpoints
+
+```bash
+# Probar health de API3
+curl http://192.0.2.12:8083/health
+# Salida: {"status":"UP","message":"API3 is Ready","timestamp":"2026-08-20T01:09:19Z","VM":2,"carnet":"202303204"}
+
+# Probar comunicacion API3 -> API1
+curl http://192.0.2.12:8083/api3/202303204/call-api1
+# Salida: {"apiname":"API1","message":"The API1 located on the VM1 is working","connection":true,"carnet":"202303204"}
+
+# Probar comunicacion API3 -> API2
+curl http://192.0.2.12:8083/api3/202303204/call-api2
+# Salida: {"apiname":"API2","message":"The API2 located on the VM1 is working","connection":true,"carnet":"202303204"}
 ```
 
 ---
