@@ -126,6 +126,6 @@ func main() {
 		writeJSON(w, callOtherAPI("API2", 1, api2URL))
 	})
 
-	fmt.Println("API3 corriendo en puerto" + port)
+	fmt.Println("API3 corriendo en puerto " + port)
 	http.ListenAndServe(port, nil)
 }
