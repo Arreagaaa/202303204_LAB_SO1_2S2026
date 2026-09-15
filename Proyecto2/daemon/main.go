@@ -85,6 +85,9 @@ func persistSnapshot(client *valkey.Client, snapshot model.Snapshot, kills []mod
 	if err := client.Set("system:ram:current", fmt.Sprintf("total=%dKB,free=%dKB,used=%dKB", snapshot.Memory.TotalKB, snapshot.Memory.FreeKB, snapshot.Memory.UsedKB)); err != nil {
 		return err
 	}
+	if err := client.SetInteger("system:ram:used", snapshot.Memory.UsedKB); err != nil {
+		return err
+	}
 	if err := client.RPush("system:ram:history", fmt.Sprintf("%d|%d|%d", snapshot.Memory.TotalKB, snapshot.Memory.FreeKB, snapshot.Memory.UsedKB)); err != nil {
 		return err
 	}

@@ -3,6 +3,7 @@ package valkey
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"net"
 	"strconv"
 	"strings"
@@ -27,6 +28,7 @@ func TestSetAndRPushWriteRESPCommands(t *testing.T) {
 			responses <- fmt.Errorf("unexpected first command: %q", command)
 			return
 		}
+		fmt.Fprint(server, "+OK\r\n")
 		if command, err := readRESPCommand(reader); err != nil {
 			responses <- err
 			return
@@ -34,6 +36,7 @@ func TestSetAndRPushWriteRESPCommands(t *testing.T) {
 			responses <- fmt.Errorf("unexpected second command: %q", command)
 			return
 		}
+		fmt.Fprint(server, "+OK\r\n")
 		responses <- nil
 	}()
 
@@ -73,7 +76,7 @@ func readRESPCommand(reader *bufio.Reader) (string, error) {
 			return "", err
 		}
 		payload := make([]byte, length+2)
-		if _, err := reader.Read(payload); err != nil {
+		if _, err := io.ReadFull(reader, payload); err != nil {
 			return "", err
 		}
 		parts = append(parts, string(payload[:length]))

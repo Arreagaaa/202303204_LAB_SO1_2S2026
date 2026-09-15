@@ -1,0 +1,18 @@
+# kernel module build artifacts
+kernel-module/*.ko
+kernel-module/*.mod
+kernel-module/*.mod.c
+kernel-module/*.mod.o
+kernel-module/*.o
+kernel-module/Module.symvers
+kernel-module/modules.order
+kernel-module/.tmp_versions/
+kernel-module/.*.cmd
+kernel-module/.module-common.o.cmd
+
+# eBPF build artifacts
+ebpf-probe/*.bpf.o
+ebpf-probe/vmlinux.h
+
+# Go build artifacts
+daemon/daemon

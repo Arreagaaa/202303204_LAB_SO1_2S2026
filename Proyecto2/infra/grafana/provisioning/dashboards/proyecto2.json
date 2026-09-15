@@ -2,7 +2,7 @@
   "title": "SO1 Proyecto 2 - Telemetria",
   "uid": "so1-pr2",
   "schemaVersion": 41,
-  "version": 1,
+  "version": 2,
   "refresh": "20s",
   "time": { "from": "now-1h", "to": "now" },
   "panels": [
@@ -11,21 +11,21 @@
       "type": "stat",
       "title": "RAM usada (KB)",
       "gridPos": { "h": 4, "w": 8, "x": 0, "y": 0 },
-      "targets": [{ "refId": "A", "query": "system:ram:current" }]
+      "targets": [{ "refId": "A", "query": "GET system:ram:used" }]
     },
     {
       "id": 2,
       "type": "stat",
       "title": "Contenedores eliminados",
       "gridPos": { "h": 4, "w": 8, "x": 8, "y": 0 },
-      "targets": [{ "refId": "A", "query": "containers:killed:count" }]
+      "targets": [{ "refId": "A", "query": "GET containers:killed:count" }]
     },
     {
       "id": 3,
       "type": "stat",
       "title": "Eventos eBPF",
       "gridPos": { "h": 4, "w": 8, "x": 16, "y": 0 },
-      "targets": [{ "refId": "A", "query": "ebpf:events:count" }]
+      "targets": [{ "refId": "A", "query": "GET ebpf:events:count" }]
     }
   ]
 }
