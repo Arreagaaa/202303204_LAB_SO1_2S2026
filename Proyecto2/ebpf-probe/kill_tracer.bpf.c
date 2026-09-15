@@ -27,6 +27,7 @@ int trace_kill(struct trace_event_raw_sys_enter *ctx)
     event->sender_pid = bpf_get_current_pid_tgid() >> 32;
     event->target_pid = (__u32)ctx->args[0];
     event->signal = (__u32)ctx->args[1];
+    bpf_printk("SO1_PR2_KILL sender=%d target=%d signal=%d", event->sender_pid, event->target_pid, event->signal);
     bpf_ringbuf_submit(event, 0);
     return 0;
 }

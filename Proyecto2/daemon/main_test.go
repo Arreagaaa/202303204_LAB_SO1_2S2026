@@ -17,10 +17,11 @@ func TestEnrichSnapshotAppliesContainerLabels(t *testing.T) {
 		},
 	}
 
-	enrichSnapshot(&snapshot, []containerctl.Container{
+	containers := []containerctl.Container{
 		{ID: "abc123", Name: "so1-pr2-low-1", PID: 11, Class: "low"},
 		{ID: "def456", Name: "so1-pr2-grafana", PID: 22, Grafana: true},
-	})
+	}
+	enrichSnapshot(&snapshot, mapContainersByPID(containers))
 
 	if snapshot.Processes[0].Command != "abc123" || snapshot.Processes[0].Name != "so1-pr2-low-1" || snapshot.Processes[0].Class != model.ClassLow {
 		t.Fatalf("unexpected low container enrichment: %#v", snapshot.Processes[0])

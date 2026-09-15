@@ -11,7 +11,7 @@ Este proyecto reúne un módulo de kernel en C, una sonda eBPF y un daemon en Go
 - `daemon/`: parser del formato `/proc`, modelo de datos y política de selección.
 - `cronjob/`: creación periódica de cinco contenedores y un intruso.
 - `docker-images/`: imágenes de alto consumo de RAM, alto consumo de CPU, bajo consumo y lectura de prueba.
-- `ebpf-probe/`: programa eBPF que publica eventos de `sys_enter_kill` en un ring buffer.
+- `ebpf-probe/`: programa eBPF que publica eventos de `sys_enter_kill` y escribe una traza legible para el daemon.
 - `infra/`: Valkey y Grafana con configuración versionada.
 - `docs/`: guía de instalación, manual técnico y límites de las pruebas desde Windows.
 
@@ -33,7 +33,11 @@ Después escribe una cabecera y una fila por proceso:
 PID,NAME,CMD_OR_CONTAINER_ID,VSZ_KB,RSS_KB,MEM_PCT,CPU_PCT,CLASS
 ```
 
-En la primera versión, `CLASS` sale como `unknown`. La identificación final de contenedores debe cruzar el PID con Docker y sus etiquetas desde el daemon; no conviene inventarla dentro del módulo.
+En la primera versión, `CLASS` sale como `unknown`. La identificación final de contenedores se resuelve desde el daemon cruzando PID con Docker y sus etiquetas; no conviene inventarla dentro del módulo.
+
+## Confirmación eBPF
+
+El programa eBPF emite un `bpf_printk` con el prefijo `SO1_PR2_KILL`. El daemon lee `trace_pipe`, espera la coincidencia del PID objetivo y solo entonces registra la eliminación confirmada.
 
 ## Ejecución en Ubuntu
 

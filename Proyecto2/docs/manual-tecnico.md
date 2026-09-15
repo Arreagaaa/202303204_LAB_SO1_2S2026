@@ -13,7 +13,7 @@ El sistema observa procesos desde el kernel y deja la decisión operativa en un 
 2. El módulo publica un snapshot en `/proc/continfo_pr2_so1_202303204`.
 3. El parser de Go convierte cada fila en un `model.Process`.
 4. La política ordena los candidatos por RSS, VSZ, CPU y memoria.
-5. Antes de retirar un contenedor, el daemon deberá esperar el evento de la sonda eBPF.
+5. Antes de retirar un contenedor, el daemon espera la confirmación de la sonda eBPF leyendo `trace_pipe`.
 6. Solo después de esa confirmación se guardará el evento de eliminación en Valkey.
 7. Grafana consulta las claves y streams publicados en Valkey.
 
@@ -39,9 +39,9 @@ La política no ejecuta ningún `kill`. Esa operación pertenece al administrado
 
 ## 5. Sonda eBPF
 
-`ebpf-probe/kill_tracer.bpf.c` se conecta al tracepoint `sys_enter_kill` y publica `sender_pid`, `target_pid`, `signal` y timestamp en un ring buffer. `vmlinux.h` se genera en la VM desde el BTF del kernel. El objeto eBPF no se puede compilar en Windows.
+`ebpf-probe/kill_tracer.bpf.c` se conecta al tracepoint `sys_enter_kill` y publica `sender_pid`, `target_pid` y `signal`. Además emite una línea con `bpf_printk` usando el prefijo `SO1_PR2_KILL` para que el daemon la lea desde `trace_pipe`. `vmlinux.h` se genera en la VM desde el BTF del kernel. El objeto eBPF no se puede compilar en Windows.
 
-El listener de user space debe cargar el objeto, leer el ring buffer y entregar los eventos a una goroutine del daemon. Debe filtrar las señales emitidas por el proceso del daemon o por la operación que este inició.
+El listener de user space del daemon lee `trace_pipe`, filtra las líneas que contienen el prefijo `SO1_PR2_KILL` y asocia el PID del contenedor con la confirmación real de terminación.
 
 ## 6. Valkey y Grafana
 
@@ -55,4 +55,4 @@ Compose levanta Valkey en el puerto `6379` y Grafana en `3001`. Se dejaron las c
 - `containers:ranking:cpu`
 - `ebpf:events:count`
 
-El daemon aún debe publicar estas claves desde su ciclo principal después de integrar el cliente de Valkey y el listener eBPF.
+El daemon publica estas claves desde su ciclo principal después de integrar el cliente de Valkey y el listener eBPF.

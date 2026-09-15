@@ -77,7 +77,7 @@ make
 sudo bpftool prog load kill_tracer.bpf.o /sys/fs/bpf/so1_pr2_kill_tracer
 ```
 
-La carga final y la lectura del ring buffer se integrarán en el daemon. No marques esta fase como validada hasta demostrar un evento real generado por una señal del daemon.
+La sonda emite eventos con `bpf_printk` y el daemon los lee desde `trace_pipe`. No marques esta fase como validada hasta demostrar un evento real generado por una señal del daemon y ver la línea `SO1_PR2_KILL` en la traza del kernel.
 
 ## 7. Cierre
 
