@@ -7,25 +7,39 @@ import (
 )
 
 type Policy struct {
-	MinimumLow           int
-	MinimumHigh          int
-	MemoryPercentLimit   float64
-	CPUPercentLimit      float64
+	MinimumLow         int
+	MinimumHigh        int
+	MemoryPercentLimit float64
+	CPUPercentLimit    float64
 }
 
 func DefaultPolicy() Policy {
 	return Policy{
-		MinimumLow: 3,
-		MinimumHigh: 2,
+		MinimumLow:         3,
+		MinimumHigh:        2,
 		MemoryPercentLimit: 25,
-		CPUPercentLimit: 80,
+		CPUPercentLimit:    80,
 	}
 }
 
 func SelectKills(snapshot model.Snapshot, policy Policy) []model.Process {
-	lowCount, highCount := countWorkloads(snapshot.Processes)
+	processes := append([]model.Process(nil), snapshot.Processes...)
+	sort.SliceStable(processes, func(i, j int) bool {
+		if processes[i].RSSKB != processes[j].RSSKB {
+			return processes[i].RSSKB > processes[j].RSSKB
+		}
+		if processes[i].VSZKB != processes[j].VSZKB {
+			return processes[i].VSZKB > processes[j].VSZKB
+		}
+		if processes[i].CPUPct != processes[j].CPUPct {
+			return processes[i].CPUPct > processes[j].CPUPct
+		}
+		return processes[i].MemoryPct > processes[j].MemoryPct
+	})
+
+	lowCount, highCount := countWorkloads(processes)
 	candidates := make([]model.Process, 0)
-	for _, process := range snapshot.Processes {
+	for _, process := range processes {
 		if process.Class == model.ClassGrafana || !overLimit(process, policy) {
 			continue
 		}
@@ -44,18 +58,6 @@ func SelectKills(snapshot model.Snapshot, policy Policy) []model.Process {
 		candidates = append(candidates, process)
 	}
 
-	sort.SliceStable(candidates, func(i, j int) bool {
-		if candidates[i].RSSKB != candidates[j].RSSKB {
-			return candidates[i].RSSKB > candidates[j].RSSKB
-		}
-		if candidates[i].VSZKB != candidates[j].VSZKB {
-			return candidates[i].VSZKB > candidates[j].VSZKB
-		}
-		if candidates[i].CPUPct != candidates[j].CPUPct {
-			return candidates[i].CPUPct > candidates[j].CPUPct
-		}
-		return candidates[i].MemoryPct > candidates[j].MemoryPct
-	})
 	return candidates
 }
 

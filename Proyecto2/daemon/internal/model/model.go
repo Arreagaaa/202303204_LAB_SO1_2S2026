@@ -1,7 +1,7 @@
 package model
 
 type Snapshot struct {
-	Memory Memory
+	Memory    Memory
 	Processes []Process
 }
 
@@ -25,8 +25,9 @@ type Process struct {
 type WorkloadClass string
 
 const (
-	ClassUnknown WorkloadClass = "unknown"
-	ClassLow     WorkloadClass = "low"
-	ClassHigh    WorkloadClass = "high"
-	ClassGrafana WorkloadClass = "grafana"
+	ClassUnknown  WorkloadClass = "unknown"
+	ClassLow      WorkloadClass = "low"
+	ClassHigh     WorkloadClass = "high"
+	ClassGrafana  WorkloadClass = "grafana"
+	ClassIntruder WorkloadClass = "intruder"
 )
