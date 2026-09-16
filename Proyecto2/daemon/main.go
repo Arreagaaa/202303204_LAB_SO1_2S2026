@@ -18,7 +18,6 @@ import (
 func main() {
 	procPath := flag.String("proc", "/proc/continfo_pr2_so1_202303204", "archivo de métricas del módulo")
 	valkeyAddr := flag.String("valkey", "127.0.0.1:6379", "dirección del servicio Valkey")
-	ebpfObject := flag.String("ebpf-object", "../ebpf-probe/kill_tracer.bpf.o", "objeto eBPF para confirmación de kills")
 	once := flag.Bool("once", false, "procesa una lectura y termina")
 	interval := flag.Duration("interval", 20*time.Second, "tiempo entre lecturas")
 	killTimeout := flag.Duration("kill-timeout", 5*time.Second, "tiempo máximo para esperar la confirmación eBPF")
@@ -32,9 +31,9 @@ func main() {
 	if client != nil {
 		defer client.Close()
 	}
-	watcher, err := killwatch.Start(*ebpfObject)
+	watcher, err := killwatch.Start()
 	if err != nil {
-		log.Printf("eBPF no disponible en %s: %v", *ebpfObject, err)
+		log.Printf("eBPF no disponible: %v", err)
 	} else if watcher != nil {
 		defer watcher.Close()
 	}

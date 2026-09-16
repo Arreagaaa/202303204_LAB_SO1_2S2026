@@ -35,12 +35,7 @@ type Watcher struct {
 	once    sync.Once
 }
 
-func Start(objectPath string) (*Watcher, error) {
-	if objectPath != "" {
-		if _, err := os.Stat(objectPath); err != nil {
-			return nil, fmt.Errorf("verificar objeto eBPF: %w", err)
-		}
-	}
+func Start() (*Watcher, error) {
 	file, err := os.Open(tracePipePath)
 	if err != nil {
 		return nil, fmt.Errorf("abrir trace_pipe: %w", err)
