@@ -38,7 +38,7 @@ fi
 
 echo ""
 echo "[6/8] Verificando sonda eBPF..."
-if [ -f /sys/fs/bpf/so1_pr2_kill_tracer ]; then
+if sudo bpftool prog show pinned /sys/fs/bpf/so1_pr2_kill_tracer >/dev/null 2>&1; then
     echo "  OK: sonda ya cargada."
 else
     echo "  FALTA: carga la sonda en una terminal NORMAL (sudo):"
