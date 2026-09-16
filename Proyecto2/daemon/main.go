@@ -38,9 +38,15 @@ func main() {
 	} else if watcher != nil {
 		defer watcher.Close()
 	}
+	var totalKills uint64
 	for {
-		if err := processSnapshot(*procPath, policy, client, watcher, *killTimeout); err != nil {
+		kills, err := processSnapshot(*procPath, policy, client, watcher, *killTimeout)
+		if err != nil {
 			log.Printf("lectura no disponible: %v", err)
+		}
+		totalKills += kills
+		if client != nil {
+			_ = client.SetInteger("containers:killed:count", totalKills)
 		}
 		if *once {
 			return
@@ -49,10 +55,10 @@ func main() {
 	}
 }
 
-func processSnapshot(path string, policy decision.Policy, client *valkey.Client, watcher *killwatch.Watcher, killTimeout time.Duration) error {
+func processSnapshot(path string, policy decision.Policy, client *valkey.Client, watcher *killwatch.Watcher, killTimeout time.Duration) (uint64, error) {
 	snapshot, err := procreader.Read(path)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	containers, err := containerctl.List()
@@ -67,7 +73,7 @@ func processSnapshot(path string, policy decision.Policy, client *valkey.Client,
 	kills := decision.SelectKills(snapshot, policy)
 	confirmedKills := stopSelectedContainers(containersByPID, kills, watcher, killTimeout)
 	if client != nil {
-		if err := persistSnapshot(client, snapshot, kills, confirmedKills, watcher); err != nil {
+		if err := persistSnapshot(client, snapshot, confirmedKills, watcher); err != nil {
 			log.Printf("valkey no disponible: %v", err)
 		}
 	}
@@ -78,10 +84,10 @@ func processSnapshot(path string, policy decision.Policy, client *valkey.Client,
 		fmt.Printf("candidato pid=%d nombre=%s cmd=%s clase=%s rss=%dKB cpu=%.2f%%\n",
 			process.PID, process.Name, process.Command, process.Class, process.RSSKB, process.CPUPct)
 	}
-	return nil
+	return uint64(len(confirmedKills)), nil
 }
 
-func persistSnapshot(client *valkey.Client, snapshot model.Snapshot, kills []model.Process, confirmedKills []killwatch.Event, watcher *killwatch.Watcher) error {
+func persistSnapshot(client *valkey.Client, snapshot model.Snapshot, confirmedKills []killwatch.Event, watcher *killwatch.Watcher) error {
 	if err := client.Set("system:ram:current", fmt.Sprintf("total=%dKB,free=%dKB,used=%dKB", snapshot.Memory.TotalKB, snapshot.Memory.FreeKB, snapshot.Memory.UsedKB)); err != nil {
 		return err
 	}
@@ -89,9 +95,6 @@ func persistSnapshot(client *valkey.Client, snapshot model.Snapshot, kills []mod
 		return err
 	}
 	if err := client.RPush("system:ram:history", fmt.Sprintf("%d|%d|%d", snapshot.Memory.TotalKB, snapshot.Memory.FreeKB, snapshot.Memory.UsedKB)); err != nil {
-		return err
-	}
-	if err := client.SetInteger("containers:killed:count", uint64(len(confirmedKills))); err != nil {
 		return err
 	}
 	if err := client.RPush("containers:killed:history", formatKillEvents(confirmedKills)); err != nil {
