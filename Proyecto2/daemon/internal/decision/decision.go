@@ -17,8 +17,8 @@ func DefaultPolicy() Policy {
 	return Policy{
 		MinimumLow:         3,
 		MinimumHigh:        2,
-		MemoryPercentLimit: 25,
-		CPUPercentLimit:    80,
+		MemoryPercentLimit: 3,
+		CPUPercentLimit:    50,
 	}
 }
 
@@ -40,7 +40,7 @@ func SelectKills(snapshot model.Snapshot, policy Policy) []model.Process {
 	lowCount, highCount := countWorkloads(processes)
 	candidates := make([]model.Process, 0)
 	for _, process := range processes {
-		if process.Class == model.ClassGrafana || !overLimit(process, policy) {
+		if process.Class == model.ClassGrafana || process.Class == model.ClassUnknown || !overLimit(process, policy) {
 			continue
 		}
 		if process.Class == model.ClassLow {

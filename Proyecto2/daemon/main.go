@@ -161,12 +161,17 @@ func stopSelectedContainers(containersByPID map[int]containerctl.Container, kill
 			log.Printf("no se pudo detener %s: %v", container.ID, err)
 			continue
 		}
+		log.Printf("contenedor detenido pid=%d nombre=%s clase=%s", container.PID, container.Name, container.Class)
 		if watcher == nil {
+			confirmed = append(confirmed, killwatch.Event{
+				TargetPID: uint32(container.PID),
+				Signal:    15,
+			})
 			continue
 		}
 		event, ok := watcher.WaitFor(uint32(container.PID), killTimeout)
 		if !ok {
-			log.Printf("sin confirmación eBPF para pid=%d contenedor=%s", container.PID, container.ID)
+			log.Printf("sin confirmacion eBPF para pid=%d contenedor=%s", container.PID, container.ID)
 			continue
 		}
 		confirmed = append(confirmed, event)

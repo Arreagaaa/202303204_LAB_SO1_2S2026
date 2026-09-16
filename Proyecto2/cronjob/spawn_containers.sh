@@ -2,7 +2,7 @@
 set -euo pipefail
 
 PREFIX="so1-pr2"
-PROFILES=(low low low high high)
+PROFILES=(low low low low low high high high)
 
 for ((index = ${#PROFILES[@]} - 1; index > 0; index--)); do
     swap=$((RANDOM % (index + 1)))
