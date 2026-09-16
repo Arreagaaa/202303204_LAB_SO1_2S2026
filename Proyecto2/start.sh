@@ -23,7 +23,7 @@ make -C ebpf-probe
 
 echo ""
 echo "[4/8] Compilando daemon Go..."
-go build -o daemon/daemon ./daemon
+go build -C daemon -o daemon .
 
 echo ""
 echo "[5/8] Verificando modulo de kernel..."
