@@ -16,14 +16,13 @@ Windows sirve para revisar el repositorio y preparar cambios, pero no puede carg
 
 ## 2. Infraestructura
 
-Desde `Proyecto2`:
+El arranque recomendado se hace desde `Proyecto2`. El script levanta Valkey y Grafana, compila los componentes y verifica que el módulo y la sonda estén listos:
 
 ```bash
-docker compose -f infra/docker-compose.yml up -d
-docker compose -f infra/docker-compose.yml ps
+bash start.sh
 ```
 
-Grafana queda disponible en `http://localhost:3001`. El usuario inicial es `admin` y la contraseña inicial es `admin`; cámbiala al instalarlo en la VM.
+Grafana queda disponible en `http://localhost:3001`. El usuario inicial es `admin` y la contraseña inicial es `admin`.
 
 ## 3. Imágenes
 
@@ -36,7 +35,7 @@ docker build -t so1-pr2/alpine-lowconsumo:latest docker-images/alpine-lowconsumo
 docker build -t so1-pr2/intruder:latest docker-images/intruder
 ```
 
-Antes de usar el cronjob, cambia sus imágenes para que correspondan a las etiquetas construidas. La versión inicial del script usa `alpine:3.20` para las dos variantes de Alpine y distingue el perfil con etiquetas Docker.
+El cronjob usa esas cuatro etiquetas y asigna la clase `low`, `high` o `intruder` mediante labels Docker.
 
 ## 4. Módulo de kernel
 
@@ -49,12 +48,12 @@ sudo rmmod continfo
 cd ..
 ```
 
-Para usar el script:
+Para usar el script manual de carga del módulo:
 
 ```bash
 chmod +x kernel-module/load_module.sh
-./kernel-module/load_module.sh load
-./kernel-module/load_module.sh unload
+sudo ./kernel-module/load_module.sh load
+sudo ./kernel-module/load_module.sh unload
 ```
 
 Si el módulo no carga, revisa el kernel y sus headers con `uname -r` y `ls /lib/modules/$(uname -r)/build`.
@@ -74,16 +73,38 @@ El modo `-once` facilita comprobar la lectura antes de dejar activo el ciclo per
 ```bash
 cd ebpf-probe
 make
-sudo bpftool prog load kill_tracer.bpf.o /sys/fs/bpf/so1_pr2_kill_tracer
+sudo bpftool prog load kill_tracer.bpf.o /sys/fs/bpf/so1_pr2_kill_tracer autoattach
+sudo bpftool link list
 ```
 
 La sonda emite eventos con `bpf_printk` y el daemon los lee desde `trace_pipe`. No marques esta fase como validada hasta demostrar un evento real generado por una señal del daemon y ver la línea `SO1_PR2_KILL` en la traza del kernel.
 
-## 7. Cierre
+## 7. Daemon
+
+Después de ejecutar `start.sh`, compila y arranca el daemon como root para que pueda leer `/proc`, usar `sys_kill` y administrar el crontab root:
 
 ```bash
-sudo rmmod continfo || true
-docker compose -f infra/docker-compose.yml down
+go build -C daemon -o daemon .
+sudo ./daemon/daemon -interval 30s
+```
+
+El daemon instala el cronjob `*/2 * * * *`, carga de forma idempotente el módulo y la sonda, inicia el compose y elimina su entrada del crontab al recibir `SIGINT` o `SIGTERM`.
+
+## 8. Verificación
+
+```bash
+cat /proc/continfo_pr2_so1_202303204
+sudo crontab -l
+sudo bpftool link list
+```
+
+Durante una eliminación deben aparecer en el daemon `SIGTERM enviado por el daemon` y `contenedor confirmado por eBPF`. Los contadores `containers:killed:count` y `ebpf:events:count` deben aumentar únicamente después de esa confirmación.
+
+## 9. Cierre
+
+```bash
+Ctrl+C
+bash stop.sh
 ```
 
 El cronjob definitivo debe eliminarse antes de apagar el daemon. Durante las pruebas conviene revisar `crontab -l` y eliminar únicamente la entrada con el prefijo del Proyecto 2.

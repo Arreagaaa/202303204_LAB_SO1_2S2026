@@ -26,22 +26,15 @@ echo "[4/7] Compilando daemon Go..."
 go build -C daemon -o daemon .
 
 echo ""
-echo "[5/7] Verificando modulo de kernel..."
-if [ -f /proc/continfo_pr2_so1_202303204 ]; then
-    echo "  OK: modulo ya cargado."
-else
-    echo "  FALTA: carga el modulo en una terminal NORMAL (sudo):"
-    echo "  cd $DIR && sudo insmod kernel-module/continfo.ko"
-    exit 1
-fi
+echo "[5/7] Cargando modulo de kernel y sonda eBPF..."
+sudo bash kernel-module/load.sh
 
 echo ""
-echo "[6/7] Verificando sonda eBPF..."
-if sudo bpftool prog show pinned /sys/fs/bpf/so1_pr2_kill_tracer >/dev/null 2>&1; then
-    echo "  OK: sonda ya cargada."
+echo "[6/7] Verificando..."
+if [ -f /proc/continfo_pr2_so1_202303204 ] && sudo bpftool link list 2>/dev/null | grep -q "tracepoint sys_enter_kill"; then
+    echo "  OK: modulo cargado y sonda adjuntada a sys_enter_kill."
 else
-    echo "  FALTA: carga la sonda en una terminal NORMAL (sudo):"
-    echo "  cd $DIR && sudo bpftool prog load ebpf-probe/kill_tracer.bpf.o /sys/fs/bpf/so1_pr2_kill_tracer"
+    echo "  ERROR: modulo o sonda no listos."
     exit 1
 fi
 

@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"os/signal"
 	"sort"
+	"strings"
 	"syscall"
 	"time"
 
@@ -36,6 +38,18 @@ func main() {
 		ScriptPath: workDir + "/cronjob/spawn_containers.sh",
 	}
 	log.Printf("cronjob apuntara a: %s", cron.ScriptPath)
+
+	log.Println("cargando modulo de kernel...")
+	if output, err := exec.Command("/bin/bash", workDir+"/kernel-module/load.sh").CombinedOutput(); err != nil {
+		log.Printf("script del modulo: %v: %s", err, strings.TrimSpace(string(output)))
+	} else {
+		log.Printf("modulo de kernel listo: %s", strings.TrimSpace(string(output)))
+	}
+
+	log.Println("levantando Grafana y Valkey...")
+	if output, err := exec.Command("docker", "compose", "-f", workDir+"/infra/docker-compose.yml", "up", "-d").CombinedOutput(); err != nil {
+		log.Printf("docker compose: %v: %s", err, strings.TrimSpace(string(output)))
+	}
 
 	log.Println("instalando cronjob de contenedores...")
 	if err := cron.Install(); err != nil {
@@ -74,6 +88,7 @@ func main() {
 		totalKills += kills
 		if client != nil {
 			_ = client.SetInteger("containers:killed:count", totalKills)
+			_ = client.SetInteger("ebpf:events:count", totalKills)
 		}
 		if *once {
 			_ = cron.Remove()
@@ -147,11 +162,7 @@ func persistSnapshot(client *valkey.Client, snapshot model.Snapshot, confirmedKi
 		return err
 	}
 	if watcher != nil {
-		if err := client.SetInteger("ebpf:events:count", watcher.Total()); err != nil {
-			return err
-		}
-	} else {
-		if err := client.SetInteger("ebpf:events:count", 0); err != nil {
+		if err := client.SetInteger("ebpf:events:raw", watcher.Total()); err != nil {
 			return err
 		}
 	}
@@ -173,21 +184,22 @@ func stopSelectedContainers(containersByPID map[int]containerctl.Container, kill
 		if !ok || container.Grafana {
 			continue
 		}
+		if err := containerctl.Signal(container.PID, syscall.SIGTERM); err != nil {
+			log.Printf("no se pudo enviar SIGTERM a pid=%d contenedor=%s: %v", container.PID, container.ID, err)
+			continue
+		}
+		log.Printf("SIGTERM enviado por el daemon pid=%d nombre=%s", container.PID, container.Name)
+		event, confirmedByEBPF := watcher.WaitFor(uint32(container.PID), killTimeout)
+		if watcher != nil && !confirmedByEBPF {
+			log.Printf("sin confirmacion eBPF para pid=%d contenedor=%s (no se registra en Valkey)", container.PID, container.ID)
+			continue
+		}
 		if err := containerctl.Stop(container.ID); err != nil {
 			log.Printf("no se pudo detener %s: %v", container.ID, err)
 			continue
 		}
 		log.Printf("contenedor detenido pid=%d nombre=%s clase=%s", container.PID, container.Name, container.Class)
 		if watcher == nil {
-			confirmed = append(confirmed, killwatch.Event{
-				TargetPID: uint32(container.PID),
-				Signal:    15,
-			})
-			continue
-		}
-		event, ok := watcher.WaitFor(uint32(container.PID), killTimeout)
-		if !ok {
-			log.Printf("sin confirmacion eBPF para pid=%d contenedor=%s", container.PID, container.ID)
 			confirmed = append(confirmed, killwatch.Event{
 				TargetPID: uint32(container.PID),
 				Signal:    15,
@@ -201,7 +213,14 @@ func stopSelectedContainers(containersByPID map[int]containerctl.Container, kill
 }
 
 func persistTopHash(client *valkey.Client, key string, processes []model.Process, value func(model.Process) uint64) error {
-	items := append([]model.Process(nil), processes...)
+	containers := make([]model.Process, 0, len(processes))
+	for _, process := range processes {
+		switch process.Class {
+		case model.ClassLow, model.ClassHigh, model.ClassIntruder:
+			containers = append(containers, process)
+		}
+	}
+	items := containers
 	sort.SliceStable(items, func(i, j int) bool {
 		return value(items[i]) > value(items[j])
 	})
@@ -212,7 +231,11 @@ func persistTopHash(client *valkey.Client, key string, processes []model.Process
 		return err
 	}
 	for _, process := range items {
-		field := fmt.Sprintf("pid=%d %s", process.PID, process.Name)
+		id := process.Command
+		if len(id) > 12 {
+			id = id[:12]
+		}
+		field := fmt.Sprintf("pid=%d %s (%s)", process.PID, process.Name, id)
 		if err := client.HSet(key, field, fmt.Sprintf("%d", value(process))); err != nil {
 			return err
 		}

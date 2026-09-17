@@ -74,7 +74,7 @@
     {
       "id": 6,
       "type": "bargauge",
-      "title": "Top 5 por RAM (KB) - historial uso",
+      "title": "Uso de RAM a lo largo del tiempo: Top 5 en vivo (KB)",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
       "datasource": { "uid": "P2392AD6B339F5133" },
       "targets": [{ "refId": "A", "command": "hgetall", "keyName": "containers:top:ram" }],
@@ -84,7 +84,7 @@
     {
       "id": 7,
       "type": "bargauge",
-      "title": "Top 5 por CPU (x100 %) - contenedores eliminados: GET containers:killed:count",
+      "title": "Contenedores eliminados por intervalo: Top 5 CPU en vivo (x100 %)",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
       "datasource": { "uid": "P2392AD6B339F5133" },
       "targets": [{ "refId": "A", "command": "hgetall", "keyName": "containers:top:cpu" }],

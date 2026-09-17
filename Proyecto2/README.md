@@ -8,7 +8,7 @@ Este proyecto reúne un módulo de kernel en C, una sonda eBPF y un daemon en Go
 ## Estado actual
 
 - `kernel-module/`: módulo C con `seq_file`, `task_struct` y `Makefile` para Ubuntu.
-- `daemon/`: parser del formato `/proc`, modelo de datos y política de selección.
+- `daemon/`: parser del formato `/proc`, modelo de datos, política de selección, administración Docker, cronjob y confirmación eBPF.
 - `cronjob/`: creación periódica de cinco contenedores y un intruso.
 - `docker-images/`: imágenes de alto consumo de RAM, alto consumo de CPU, bajo consumo y lectura de prueba.
 - `ebpf-probe/`: programa eBPF que publica eventos de `sys_enter_kill` y escribe una traza legible para el daemon.
@@ -37,16 +37,15 @@ En la primera versión, `CLASS` sale como `unknown`. La identificación final de
 
 ## Confirmación eBPF
 
-El programa eBPF emite un `bpf_printk` con el prefijo `SO1_PR2_KILL`. El daemon lee `trace_pipe`, espera la coincidencia del PID objetivo y solo entonces registra la eliminación confirmada.
+El programa eBPF se carga con `autoattach` y emite un `bpf_printk` con el prefijo `SO1_PR2_KILL`. El daemon envía `SIGTERM` al PID del contenedor, lee `trace_pipe`, espera la coincidencia del PID objetivo y solo entonces registra la eliminación confirmada.
 
 ## Ejecución en Ubuntu
 
 ```bash
 cd Proyecto2
-chmod +x kernel-module/load_module.sh cronjob/spawn_containers.sh
-make -C kernel-module
-./kernel-module/load_module.sh load
-cd daemon && go run . -once
+bash start.sh
+go build -C daemon -o daemon .
+sudo ./daemon/daemon -interval 30s
 ```
 
 La guía completa está en [docs/guia-instalacion.md](docs/guia-instalacion.md).

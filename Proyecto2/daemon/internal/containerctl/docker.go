@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"syscall"
 )
 
 type Container struct {
@@ -49,6 +50,16 @@ func Stop(containerID string) error {
 	}
 	if output, err := exec.Command("docker", "stop", containerID).CombinedOutput(); err != nil {
 		return fmt.Errorf("detener %s: %w: %s", containerID, err, strings.TrimSpace(string(output)))
+	}
+	return nil
+}
+
+func Signal(pid int, signal syscall.Signal) error {
+	if pid <= 0 {
+		return fmt.Errorf("PID inválido: %d", pid)
+	}
+	if err := syscall.Kill(pid, signal); err != nil {
+		return fmt.Errorf("enviar señal %d al PID %d: %w", signal, pid, err)
 	}
 	return nil
 }

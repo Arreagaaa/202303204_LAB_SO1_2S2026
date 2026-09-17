@@ -24,9 +24,8 @@ docker ps -a --filter "label=so1.pr2.class" -q | xargs -r docker rm 2>/dev/null 
 
 echo ""
 echo "[4/5] Descargando modulo y sonda..."
+sudo rm -f /sys/fs/bpf/so1_pr2_kill_tracer
 sudo rmmod continfo 2>/dev/null || echo "  Modulo ya descargado o sin permisos."
-sudo bpftool prog detach pinned /sys/fs/bpf/so1_pr2_kill_tracer 2>/dev/null || true
-sudo rm -f /sys/fs/bpf/so1_pr2_kill_tracer 2>/dev/null || true
 
 echo ""
 echo "[5/5] Bajando infraestructura..."
