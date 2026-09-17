@@ -2,25 +2,17 @@
 set -euo pipefail
 
 PREFIX="so1-pr2"
-PROFILES=(low low low low low high high high)
+IMAGES=("so1-pr2/go-client:latest" "so1-pr2/alpine-highcpu:latest" "so1-pr2/alpine-lowconsumo:latest")
+CLASSES=("high" "high" "low")
+TS=$(date +%s)
 
-for ((index = ${#PROFILES[@]} - 1; index > 0; index--)); do
-    swap=$((RANDOM % (index + 1)))
-    value="${PROFILES[$index]}"
-    PROFILES[$index]="${PROFILES[$swap]}"
-    PROFILES[$swap]="$value"
+for i in 0 1 2 3 4; do
+    idx=$((RANDOM % ${#IMAGES[@]}))
+    image="${IMAGES[$idx]}"
+    class="${CLASSES[$idx]}"
+    name="${PREFIX}-${i}-${TS}"
+    docker run -d --name "$name" --label so1.pr2.class="$class" "$image" >/dev/null 2>&1
 done
 
-for index in "${!PROFILES[@]}"; do
-    name="${PREFIX}-${index}-$(date +%s)"
-    profile="${PROFILES[$index]}"
-
-    if [[ "$profile" == "low" ]]; then
-        docker run -d --name "$name" --label so1.pr2.class=low so1-pr2/alpine-lowconsumo:latest
-    else
-        docker run -d --name "$name" --label so1.pr2.class=high so1-pr2/alpine-highcpu:latest
-    fi
-done
-
-intruder="${PREFIX}-intruder-$(date +%s)"
-docker run -d --name "$intruder" --label so1.pr2.class=intruder so1-pr2/intruder:latest
+intruder="${PREFIX}-intruder-${TS}"
+docker run -d --name "$intruder" --label so1.pr2.class=intruder so1-pr2/intruder:latest >/dev/null 2>&1

@@ -14,19 +14,19 @@ pkill -f "daemon/daemon" 2>/dev/null || true
 sleep 1
 
 echo ""
-echo "[2/5] Descargando modulo de kernel..."
-sudo rmmod continfo 2>/dev/null || echo "  Modulo ya descargado o sin permisos."
+echo "[2/5] Eliminando cronjob del daemon..."
+crontab -l 2>/dev/null | grep -v "proyecto2-so1" | crontab - 2>/dev/null || true
 
 echo ""
-echo "[3/5] Descargando sonda eBPF..."
-sudo bpftool prog detach pinned /sys/fs/bpf/so1_pr2_kill_tracer 2>/dev/null || true
-sudo rm -f /sys/fs/bpf/so1_pr2_kill_tracer 2>/dev/null || true
-
-echo ""
-echo "[4/5] Eliminando contenedores de prueba..."
+echo "[3/5] Eliminando contenedores de prueba..."
 docker ps -a --filter "label=so1.pr2.class" -q | xargs -r docker stop 2>/dev/null || true
 docker ps -a --filter "label=so1.pr2.class" -q | xargs -r docker rm 2>/dev/null || true
-docker stop test-kill 2>/dev/null && docker rm test-kill 2>/dev/null || true
+
+echo ""
+echo "[4/5] Descargando modulo y sonda..."
+sudo rmmod continfo 2>/dev/null || echo "  Modulo ya descargado o sin permisos."
+sudo bpftool prog detach pinned /sys/fs/bpf/so1_pr2_kill_tracer 2>/dev/null || true
+sudo rm -f /sys/fs/bpf/so1_pr2_kill_tracer 2>/dev/null || true
 
 echo ""
 echo "[5/5] Bajando infraestructura..."

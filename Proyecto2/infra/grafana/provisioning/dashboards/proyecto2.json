@@ -2,30 +2,136 @@
   "title": "SO1 Proyecto 2 - Telemetria",
   "uid": "so1-pr2",
   "schemaVersion": 41,
-  "version": 2,
+  "version": 3,
   "refresh": "20s",
   "time": { "from": "now-1h", "to": "now" },
   "panels": [
     {
       "id": 1,
       "type": "stat",
-      "title": "RAM usada (KB)",
-      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 0 },
-      "targets": [{ "refId": "A", "query": "GET system:ram:used" }]
+      "title": "RAM Total (KB)",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "targets": [{ "refId": "A", "query": "GET system:ram:total" }]
     },
     {
       "id": 2,
       "type": "stat",
-      "title": "Contenedores eliminados",
-      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 0 },
-      "targets": [{ "refId": "A", "query": "GET containers:killed:count" }]
+      "title": "RAM Usada (KB)",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "targets": [{ "refId": "A", "query": "GET system:ram:used" }],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 10000000 },
+              { "color": "red", "value": 14000000 }
+            ]
+          }
+        }
+      }
     },
     {
       "id": 3,
       "type": "stat",
+      "title": "Memoria Libre (KB)",
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "targets": [{ "refId": "A", "query": "GET system:ram:free" }],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 500000 },
+              { "color": "green", "value": 2000000 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Contenedores Eliminados",
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+      "targets": [{ "refId": "A", "query": "GET containers:killed:count" }]
+    },
+    {
+      "id": 5,
+      "type": "stat",
       "title": "Eventos eBPF",
-      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 0 },
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
       "targets": [{ "refId": "A", "query": "GET ebpf:events:count" }]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Uso de RAM a lo largo del tiempo",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "targets": [
+        {
+          "refId": "USED",
+          "query": "GET system:ram:used",
+          "datasource": { "uid": "P2392AD6B339F5133" }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 20
+          },
+          "unit": "decbytes"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Contenedores Eliminados a lo largo del tiempo",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "targets": [
+        {
+          "refId": "A",
+          "query": "GET containers:killed:count",
+          "datasource": { "uid": "P2392AD6B339F5133" }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 50
+          }
+        }
+      }
+    },
+    {
+      "id": 8,
+      "type": "piechart",
+      "title": "Top 5 Contenedores por Consumo de RAM",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 12 },
+      "targets": [
+        {
+          "refId": "A",
+          "query": "LRANGE containers:ranking:ram 0 4",
+          "datasource": { "uid": "P2392AD6B339F5133" }
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "piechart",
+      "title": "Top 5 Contenedores por Consumo de CPU",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 12 },
+      "targets": [
+        {
+          "refId": "A",
+          "query": "LRANGE containers:ranking:cpu 0 4",
+          "datasource": { "uid": "P2392AD6B339F5133" }
+        }
+      ]
     }
   ]
 }

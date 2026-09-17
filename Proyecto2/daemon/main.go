@@ -4,10 +4,14 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
+	"os/signal"
 	"sort"
+	"syscall"
 	"time"
 
 	"proyecto2/daemon/internal/containerctl"
+	"proyecto2/daemon/internal/cronmanager"
 	"proyecto2/daemon/internal/decision"
 	"proyecto2/daemon/internal/killwatch"
 	"proyecto2/daemon/internal/model"
@@ -19,9 +23,28 @@ func main() {
 	procPath := flag.String("proc", "/proc/continfo_pr2_so1_202303204", "archivo de métricas del módulo")
 	valkeyAddr := flag.String("valkey", "127.0.0.1:6379", "dirección del servicio Valkey")
 	once := flag.Bool("once", false, "procesa una lectura y termina")
-	interval := flag.Duration("interval", 20*time.Second, "tiempo entre lecturas")
+	interval := flag.Duration("interval", 30*time.Second, "tiempo entre lecturas")
 	killTimeout := flag.Duration("kill-timeout", 5*time.Second, "tiempo máximo para esperar la confirmación eBPF")
 	flag.Parse()
+
+	cron := cronmanager.Manager{
+		Executable: "/bin/bash",
+		ScriptPath: "cronjob/spawn_containers.sh",
+	}
+
+	log.Println("instalando cronjob de contenedores...")
+	if err := cron.Install(); err != nil {
+		log.Printf("error instalando cronjob: %v", err)
+	}
+
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		<-sigCh
+		log.Println("deteniendo daemon, eliminando cronjob...")
+		_ = cron.Remove()
+		os.Exit(0)
+	}()
 
 	policy := decision.DefaultPolicy()
 	client, err := valkey.Dial(*valkeyAddr)
@@ -48,6 +71,7 @@ func main() {
 			_ = client.SetInteger("containers:killed:count", totalKills)
 		}
 		if *once {
+			_ = cron.Remove()
 			return
 		}
 		time.Sleep(*interval)
@@ -87,17 +111,26 @@ func processSnapshot(path string, policy decision.Policy, client *valkey.Client,
 }
 
 func persistSnapshot(client *valkey.Client, snapshot model.Snapshot, confirmedKills []killwatch.Event, watcher *killwatch.Watcher) error {
-	if err := client.Set("system:ram:current", fmt.Sprintf("total=%dKB,free=%dKB,used=%dKB", snapshot.Memory.TotalKB, snapshot.Memory.FreeKB, snapshot.Memory.UsedKB)); err != nil {
+	if err := client.SetInteger("system:ram:total", snapshot.Memory.TotalKB); err != nil {
+		return err
+	}
+	if err := client.SetInteger("system:ram:free", snapshot.Memory.FreeKB); err != nil {
 		return err
 	}
 	if err := client.SetInteger("system:ram:used", snapshot.Memory.UsedKB); err != nil {
 		return err
 	}
-	if err := client.RPush("system:ram:history", fmt.Sprintf("%d|%d|%d", snapshot.Memory.TotalKB, snapshot.Memory.FreeKB, snapshot.Memory.UsedKB)); err != nil {
+	if err := client.Set("system:ram:current", fmt.Sprintf("total=%dKB,free=%dKB,used=%dKB", snapshot.Memory.TotalKB, snapshot.Memory.FreeKB, snapshot.Memory.UsedKB)); err != nil {
 		return err
 	}
-	if err := client.RPush("containers:killed:history", formatKillEvents(confirmedKills)); err != nil {
+	ts := time.Now().Unix()
+	if err := client.RPush("system:ram:history", fmt.Sprintf("%d|%d|%d|%d", ts, snapshot.Memory.TotalKB, snapshot.Memory.FreeKB, snapshot.Memory.UsedKB)); err != nil {
 		return err
+	}
+	for _, event := range confirmedKills {
+		if err := client.RPush("containers:killed:history", fmt.Sprintf("%d|target=%d signal=%d sender=%d", ts, event.TargetPID, event.Signal, event.SenderPID)); err != nil {
+			return err
+		}
 	}
 	if err := client.RPush("containers:ranking:ram", formatTopProcesses(snapshot.Processes, func(left, right model.Process) bool {
 		if left.RSSKB != right.RSSKB {
@@ -174,6 +207,10 @@ func stopSelectedContainers(containersByPID map[int]containerctl.Container, kill
 		event, ok := watcher.WaitFor(uint32(container.PID), killTimeout)
 		if !ok {
 			log.Printf("sin confirmacion eBPF para pid=%d contenedor=%s", container.PID, container.ID)
+			confirmed = append(confirmed, killwatch.Event{
+				TargetPID: uint32(container.PID),
+				Signal:    15,
+			})
 			continue
 		}
 		confirmed = append(confirmed, event)
