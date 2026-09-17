@@ -40,6 +40,21 @@ func (client *Client) RPush(key, value string) error {
 	return err
 }
 
+func (client *Client) HSet(key, field, value string) error {
+	_, err := client.do("HSET", key, field, value)
+	return err
+}
+
+func (client *Client) Del(keys ...string) error {
+	_, err := client.do("DEL", keys...)
+	return err
+}
+
+func (client *Client) LTrim(key string, start, stop int) error {
+	_, err := client.do("LTRIM", key, strconv.Itoa(start), strconv.Itoa(stop))
+	return err
+}
+
 func (client *Client) do(command string, args ...string) (string, error) {
 	if client == nil || client.conn == nil {
 		return "", fmt.Errorf("cliente valkey no inicializado")

@@ -27,10 +27,15 @@ func main() {
 	killTimeout := flag.Duration("kill-timeout", 5*time.Second, "tiempo máximo para esperar la confirmación eBPF")
 	flag.Parse()
 
+	workDir, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("no se pudo obtener el directorio actual: %v", err)
+	}
 	cron := cronmanager.Manager{
 		Executable: "/bin/bash",
-		ScriptPath: "cronjob/spawn_containers.sh",
+		ScriptPath: workDir + "/cronjob/spawn_containers.sh",
 	}
+	log.Printf("cronjob apuntara a: %s", cron.ScriptPath)
 
 	log.Println("instalando cronjob de contenedores...")
 	if err := cron.Install(); err != nil {
@@ -124,34 +129,21 @@ func persistSnapshot(client *valkey.Client, snapshot model.Snapshot, confirmedKi
 		return err
 	}
 	ts := time.Now().Unix()
-	if err := client.RPush("system:ram:history", fmt.Sprintf("%d|%d|%d|%d", ts, snapshot.Memory.TotalKB, snapshot.Memory.FreeKB, snapshot.Memory.UsedKB)); err != nil {
+	if err := client.RPush("system:ram:history", fmt.Sprintf("%d,%d,%d,%d", ts, snapshot.Memory.UsedKB, snapshot.Memory.FreeKB, snapshot.Memory.TotalKB)); err != nil {
 		return err
 	}
+	_ = client.LTrim("system:ram:history", -180, -1)
 	for _, event := range confirmedKills {
-		if err := client.RPush("containers:killed:history", fmt.Sprintf("%d|target=%d signal=%d sender=%d", ts, event.TargetPID, event.Signal, event.SenderPID)); err != nil {
+		if err := client.RPush("containers:killed:history", fmt.Sprintf("%d,1", ts)); err != nil {
 			return err
 		}
+		_ = event
 	}
-	if err := client.RPush("containers:ranking:ram", formatTopProcesses(snapshot.Processes, func(left, right model.Process) bool {
-		if left.RSSKB != right.RSSKB {
-			return left.RSSKB > right.RSSKB
-		}
-		if left.VSZKB != right.VSZKB {
-			return left.VSZKB > right.VSZKB
-		}
-		return left.CPUPct > right.CPUPct
-	})); err != nil {
+	_ = client.LTrim("containers:killed:history", -180, -1)
+	if err := persistTopHash(client, "containers:top:ram", snapshot.Processes, func(p model.Process) uint64 { return p.RSSKB }); err != nil {
 		return err
 	}
-	if err := client.RPush("containers:ranking:cpu", formatTopProcesses(snapshot.Processes, func(left, right model.Process) bool {
-		if left.CPUPct != right.CPUPct {
-			return left.CPUPct > right.CPUPct
-		}
-		if left.RSSKB != right.RSSKB {
-			return left.RSSKB > right.RSSKB
-		}
-		return left.VSZKB > right.VSZKB
-	})); err != nil {
+	if err := persistTopHash(client, "containers:top:cpu", snapshot.Processes, func(p model.Process) uint64 { return uint64(p.CPUPct * 100) }); err != nil {
 		return err
 	}
 	if watcher != nil {
@@ -164,17 +156,6 @@ func persistSnapshot(client *valkey.Client, snapshot model.Snapshot, confirmedKi
 		}
 	}
 	return nil
-}
-
-func formatKillEvents(events []killwatch.Event) string {
-	if len(events) == 0 {
-		return "none"
-	}
-	parts := make([]string, 0, len(events))
-	for _, event := range events {
-		parts = append(parts, fmt.Sprintf("target=%d signal=%d sender=%d ts=%d", event.TargetPID, event.Signal, event.SenderPID, event.TimestampNS))
-	}
-	return joinWithComma(parts)
 }
 
 func mapContainersByPID(containers []containerctl.Container) map[int]containerctl.Container {
@@ -219,30 +200,24 @@ func stopSelectedContainers(containersByPID map[int]containerctl.Container, kill
 	return confirmed
 }
 
-func formatTopProcesses(processes []model.Process, less func(model.Process, model.Process) bool) string {
+func persistTopHash(client *valkey.Client, key string, processes []model.Process, value func(model.Process) uint64) error {
 	items := append([]model.Process(nil), processes...)
 	sort.SliceStable(items, func(i, j int) bool {
-		return less(items[i], items[j])
+		return value(items[i]) > value(items[j])
 	})
 	if len(items) > 5 {
 		items = items[:5]
 	}
-	parts := make([]string, 0, len(items))
+	if err := client.Del(key); err != nil {
+		return err
+	}
 	for _, process := range items {
-		parts = append(parts, fmt.Sprintf("%d:%s:%d:%d:%.2f", process.PID, process.Name, process.RSSKB, process.VSZKB, process.CPUPct))
+		field := fmt.Sprintf("pid=%d %s", process.PID, process.Name)
+		if err := client.HSet(key, field, fmt.Sprintf("%d", value(process))); err != nil {
+			return err
+		}
 	}
-	return joinWithComma(parts)
-}
-
-func joinWithComma(parts []string) string {
-	if len(parts) == 0 {
-		return ""
-	}
-	result := parts[0]
-	for index := 1; index < len(parts); index++ {
-		result += "," + parts[index]
-	}
-	return result
+	return nil
 }
 
 func enrichSnapshot(snapshot *model.Snapshot, containersByPID map[int]containerctl.Container) {
