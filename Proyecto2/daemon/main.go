@@ -194,11 +194,19 @@ func stopSelectedContainers(containersByPID map[int]containerctl.Container, kill
 			log.Printf("sin confirmacion eBPF para pid=%d contenedor=%s (no se registra en Valkey)", container.PID, container.ID)
 			continue
 		}
+		if watcher != nil {
+			log.Printf("contenedor confirmado por eBPF pid=%d signal=%d sender=%d", event.TargetPID, event.Signal, event.SenderPID)
+		}
 		if err := containerctl.Stop(container.ID); err != nil {
 			log.Printf("no se pudo detener %s: %v", container.ID, err)
 			continue
 		}
 		log.Printf("contenedor detenido pid=%d nombre=%s clase=%s", container.PID, container.Name, container.Class)
+		if err := containerctl.Remove(container.ID); err != nil {
+			log.Printf("no se pudo eliminar %s: %v", container.ID, err)
+			continue
+		}
+		log.Printf("contenedor eliminado id=%s", container.ID)
 		if watcher == nil {
 			confirmed = append(confirmed, killwatch.Event{
 				TargetPID: uint32(container.PID),
@@ -207,7 +215,6 @@ func stopSelectedContainers(containersByPID map[int]containerctl.Container, kill
 			continue
 		}
 		confirmed = append(confirmed, event)
-		log.Printf("contenedor confirmado por eBPF pid=%d signal=%d sender=%d", event.TargetPID, event.Signal, event.SenderPID)
 	}
 	return confirmed
 }

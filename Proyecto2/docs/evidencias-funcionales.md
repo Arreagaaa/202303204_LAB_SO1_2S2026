@@ -41,8 +41,9 @@ Durante la prueba se observaron líneas como:
 
 ```text
 SIGTERM enviado por el daemon pid=125768 nombre=so1-pr2-4-1789673761
-contenedor detenido pid=125768 nombre=so1-pr2-4-1789673761 clase=high
 contenedor confirmado por eBPF pid=125768 signal=15 sender=120002
+contenedor detenido pid=125768 nombre=so1-pr2-4-1789673761 clase=high
+contenedor eliminado id=...
 ```
 
 La misma secuencia se observó para varios contenedores `high`. El PID confirmado por eBPF coincide con el PID al que el daemon envió la señal.
@@ -81,4 +82,4 @@ cronjob -> contenedores Docker -> módulo /proc -> daemon Go
 -> confirmación -> Valkey -> Grafana
 ```
 
-La política conserva como mínimo tres contenedores `low`, dos `high` y nunca selecciona Grafana.
+El cronjob genera tres contenedores `low` y dos `high` por lote, mientras la política conserva esos mínimos y nunca selecciona Grafana.

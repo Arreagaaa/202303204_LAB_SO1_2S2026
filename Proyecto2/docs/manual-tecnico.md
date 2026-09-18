@@ -16,7 +16,8 @@ El sistema observa procesos desde el kernel y deja la decisión operativa en un 
 5. Antes de retirar un contenedor, el daemon envía `SIGTERM` directamente a su PID mediante `syscall.Kill`.
 6. La sonda eBPF captura `sys_enter_kill`; el daemon espera la coincidencia del PID en `trace_pipe`.
 7. Solo después de esa confirmación se guarda el evento de eliminación en Valkey.
-8. Grafana consulta las claves publicadas en Valkey.
+8. Después de detenerlo, el daemon ejecuta `docker rm` para eliminar el contenedor.
+9. Grafana consulta las claves publicadas en Valkey.
 
 ## 2.1. Diagrama de arquitectura
 
@@ -47,6 +48,8 @@ Las imágenes de prueba representan perfiles distintos: `go-client` reserva y to
 La política no ejecuta ningún `kill`. Esa operación pertenece al administrador de contenedores y queda pendiente de confirmación eBPF.
 
 `internal/containerctl` resuelve el PID de cada contenedor mediante `docker inspect` y `internal/cronmanager` administra una entrada marcada en el crontab del usuario. Las dos piezas están aisladas para poder sustituir el comando Docker por el SDK oficial durante la integración final sin cambiar la política.
+
+El cronjob garantiza tres contenedores `low` y dos `high` por ejecución. Los dos perfiles `high` se seleccionan aleatoriamente entre `go-client` y `alpine-highcpu`; después se mezclan las cinco posiciones para conservar el despliegue aleatorio sin violar los mínimos.
 
 ## 5. Sonda eBPF
 
