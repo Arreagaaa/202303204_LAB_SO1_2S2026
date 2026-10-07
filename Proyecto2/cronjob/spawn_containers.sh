@@ -2,15 +2,27 @@
 set -euo pipefail
 
 PREFIX="so1-pr2"
-IMAGES=("so1-pr2/go-client:latest" "so1-pr2/alpine-highcpu:latest" "so1-pr2/alpine-lowconsumo:latest")
-CLASSES=("high" "high" "low")
+HIGH_IMAGES=("so1-pr2/go-client:latest" "so1-pr2/alpine-highcpu:latest")
 TS=$(date +%s)
 
-for i in 0 1 2 3 4; do
-    idx=$((RANDOM % ${#IMAGES[@]}))
-    image="${IMAGES[$idx]}"
-    class="${CLASSES[$idx]}"
-    name="${PREFIX}-${i}-${TS}"
+PROFILES=(
+    "so1-pr2/alpine-lowconsumo:latest|low"
+    "so1-pr2/alpine-lowconsumo:latest|low"
+    "so1-pr2/alpine-lowconsumo:latest|low"
+    "${HIGH_IMAGES[$((RANDOM % ${#HIGH_IMAGES[@]}))]}|high"
+    "${HIGH_IMAGES[$((RANDOM % ${#HIGH_IMAGES[@]}))]}|high"
+)
+
+for ((index = ${#PROFILES[@]} - 1; index > 0; index--)); do
+    swap=$((RANDOM % (index + 1)))
+    value="${PROFILES[$index]}"
+    PROFILES[$index]="${PROFILES[$swap]}"
+    PROFILES[$swap]="$value"
+done
+
+for index in "${!PROFILES[@]}"; do
+    IFS='|' read -r image class <<< "${PROFILES[$index]}"
+    name="${PREFIX}-${index}-${TS}"
     docker run -d --name "$name" --label so1.pr2.class="$class" "$image" >/dev/null 2>&1
 done
 

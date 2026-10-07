@@ -54,6 +54,16 @@ func Stop(containerID string) error {
 	return nil
 }
 
+func Remove(containerID string) error {
+	if strings.TrimSpace(containerID) == "" {
+		return fmt.Errorf("ID de contenedor vacío")
+	}
+	if output, err := exec.Command("docker", "rm", containerID).CombinedOutput(); err != nil {
+		return fmt.Errorf("eliminar %s: %w: %s", containerID, err, strings.TrimSpace(string(output)))
+	}
+	return nil
+}
+
 func Signal(pid int, signal syscall.Signal) error {
 	if pid <= 0 {
 		return fmt.Errorf("PID inválido: %d", pid)
