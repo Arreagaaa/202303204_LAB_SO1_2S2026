@@ -1,0 +1,17 @@
+apiVersion: mumnk8s.sopes1.usac/v1alpha1
+kind: ValkeyInstance
+metadata:
+  name: reports
+  namespace: mumnk8s
+spec:
+  replicas: 1
+  storage: 1Gi
+---
+apiVersion: mumnk8s.sopes1.usac/v1alpha1
+kind: GrafanaInstance
+metadata:
+  name: reports
+  namespace: mumnk8s
+spec:
+  service:
+    port: 3000

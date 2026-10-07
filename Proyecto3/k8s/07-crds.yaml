@@ -1,0 +1,56 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: valkeyinstances.mumnk8s.sopes1.usac
+spec:
+  group: mumnk8s.sopes1.usac
+  scope: Namespaced
+  names:
+    plural: valkeyinstances
+    singular: valkeyinstance
+    kind: ValkeyInstance
+    shortNames: [vki]
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                replicas:
+                  type: integer
+                storage:
+                  type: string
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: grafanainstances.mumnk8s.sopes1.usac
+spec:
+  group: mumnk8s.sopes1.usac
+  scope: Namespaced
+  names:
+    plural: grafanainstances
+    singular: grafanainstance
+    kind: GrafanaInstance
+    shortNames: [gfi]
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                service:
+                  type: object
+                  properties:
+                    port:
+                      type: integer

@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package wartweets;
+
+option go_package = "proyecto3/proto";
+
+message WarReportRequest {
+  string country = 1;
+  int32 warplanes_in_air = 2;
+  int32 warships_in_water = 3;
+  string timestamp = 4;
+}
+
+message WarReportResponse {
+  string status = 1;
+}
+
+service WarReportService {
+  rpc SendReport(WarReportRequest) returns (WarReportResponse);
+}

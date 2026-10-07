@@ -1,0 +1,5 @@
+replicaCount: 1
+storage: 1Gi
+image:
+  repository: valkey/valkey
+  tag: "8"
