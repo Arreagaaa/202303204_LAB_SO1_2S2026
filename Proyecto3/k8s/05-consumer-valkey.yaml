@@ -21,6 +21,13 @@ spec:
               value: amqp://guest:x@rabbitmq:5672/
             - name: VALKEY_ADDRESS
               value: valkey:6379
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 300m
+              memory: 128Mi
 ---
 apiVersion: v1
 kind: Service
@@ -56,6 +63,13 @@ spec:
           ports:
             - containerPort: 6379
           args: ["valkey-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 300m
+              memory: 384Mi
           volumeMounts:
             - name: data
               mountPath: /data

@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: falco-mumnk8s-rules
+  namespace: falco
+data:
+  mumnk8s-rules.yaml: |
+    - rule: MUMNK8s sensitive file read
+      desc: Detecta la lectura de un archivo sensible dentro de los servicios del proyecto
+      condition: >
+        open_read and container and
+        (fd.name=/etc/shadow or fd.name startswith /app/secretos) and
+        (container.image.repository contains "mumnk8s")
+      output: >
+        MUMNK8s intento de leer archivo sensible
+        (user=%user.name command=%proc.cmdline file=%fd.name container=%container.name)
+      priority: WARNING
+      tags: [mumnk8s, filesystem]

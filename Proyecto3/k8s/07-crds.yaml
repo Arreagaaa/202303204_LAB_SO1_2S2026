@@ -54,3 +54,5 @@ spec:
                   properties:
                     port:
                       type: integer
+                valkeyService:
+                  type: string

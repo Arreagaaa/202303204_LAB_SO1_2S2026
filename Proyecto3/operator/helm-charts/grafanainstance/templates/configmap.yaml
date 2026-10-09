@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "grafanainstance.fullname" . }}
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Valkey
+        type: redis-datasource
+        access: proxy
+        url: redis://{{ .Values.valkeyService }}:6379
+        isDefault: true
+  dashboards.yaml: |
+    apiVersion: 1
+    providers:
+      - name: mumnk8s
+        type: file
+        updateIntervalSeconds: 10
+        options:
+          path: /etc/grafana/provisioning
+  dashboard.json: |
+{{ .Files.Get "dashboards/reports.json" | indent 4 }}

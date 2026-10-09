@@ -1,4 +1,5 @@
 use axum::{extract::State, http::StatusCode, routing::{get, post}, Json, Router};
+use chrono::DateTime;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::{env, net::SocketAddr};
@@ -17,6 +18,13 @@ struct Report {
     timestamp: String,
 }
 
+fn valid_report(report: &Report) -> bool {
+    matches!(report.country.as_str(), "USA" | "RUS" | "CHN" | "ESP" | "GTM")
+        && (0..=50).contains(&report.warplanes_in_air)
+        && (0..=30).contains(&report.warships_in_water)
+        && DateTime::parse_from_rfc3339(&report.timestamp).is_ok()
+}
+
 async fn health() -> &'static str {
     "ok"
 }
@@ -25,13 +33,7 @@ async fn receive_report(
     State(state): State<AppState>,
     Json(report): Json<Report>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, String)> {
-    if report.country.len() != 3
-        || report.warplanes_in_air < 0
-        || report.warplanes_in_air > 50
-        || report.warships_in_water < 0
-        || report.warships_in_water > 30
-        || report.timestamp.is_empty()
-    {
+    if !valid_report(&report) {
         return Err((StatusCode::BAD_REQUEST, "reporte fuera de rango".to_string()));
     }
 
@@ -57,4 +59,44 @@ async fn main() {
     println!("api-rust escuchando en {address}");
     let listener = tokio::net::TcpListener::bind(address).await.expect("no se pudo abrir el puerto");
     axum::serve(listener, app).await.expect("fallo del servidor");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{valid_report, Report};
+
+    fn report() -> Report {
+        Report {
+            country: "GTM".to_string(),
+            warplanes_in_air: 20,
+            warships_in_water: 10,
+            timestamp: "2026-10-07T23:40:00Z".to_string(),
+        }
+    }
+
+    #[test]
+    fn acepta_reporte_valido() {
+        assert!(valid_report(&report()));
+    }
+
+    #[test]
+    fn rechaza_pais_no_definido() {
+        let mut value = report();
+        value.country = "MEX".to_string();
+        assert!(!valid_report(&value));
+    }
+
+    #[test]
+    fn rechaza_valores_fuera_de_rango() {
+        let mut value = report();
+        value.warplanes_in_air = 51;
+        assert!(!valid_report(&value));
+    }
+
+    #[test]
+    fn rechaza_timestamp_invalido() {
+        let mut value = report();
+        value.timestamp = "ahora".to_string();
+        assert!(!valid_report(&value));
+    }
 }

@@ -1,26 +1,74 @@
-# Operator M.U.M.N.K8s
+# Operator Helm-based
 
-El Operator se construye con Operator SDK y el plugin Helm. Cada recurso personalizado representa una instancia administrada:
+## Proposito
 
-- `ValkeyInstance` instala Valkey con almacenamiento persistente.
-- `GrafanaInstance` instala Grafana con el datasource y los dashboards del proyecto.
+El Operator permite administrar Valkey y Grafana mediante recursos personalizados de Kubernetes. El usuario declara el estado deseado en un Custom Resource y el reconciliador Helm crea o actualiza los recursos asociados.
 
-Los charts que se deben encapsular en el proyecto generado por Operator SDK se encuentran en `helm-charts/`. El reconciliador Helm mantiene los recursos creados por cada Custom Resource y permite cambiar replicas, almacenamiento y puerto desde YAML.
+## Recursos administrados
 
-## Inicializar el proyecto
+### ValkeyInstance
+
+Representa una instancia de Valkey y permite definir:
+
+- Numero de replicas.
+- Tamano de almacenamiento.
+
+El chart crea un StatefulSet, un Service y un PVC.
+
+### GrafanaInstance
+
+Representa una instancia de Grafana y permite definir:
+
+- Puerto del Service.
+- Service de Valkey utilizado como datasource.
+
+El chart crea un Deployment, un Service, un Secret y el provisioning inicial de Grafana.
+
+## Crear el proyecto con Operator SDK
+
+Ejecutar desde una carpeta destinada exclusivamente al operador:
 
 ```bash
 operator-sdk init --plugins helm
-operator-sdk create api --group mumnk8s --version v1alpha1 --kind ValkeyInstance
-operator-sdk create api --group mumnk8s --version v1alpha1 --kind GrafanaInstance
+operator-sdk create api \
+  --group mumnk8s \
+  --version v1alpha1 \
+  --kind ValkeyInstance
+operator-sdk create api \
+  --group mumnk8s \
+  --version v1alpha1 \
+  --kind GrafanaInstance
 ```
 
-Luego se copian los charts de esta carpeta dentro de `helm-charts/` del operador generado y se actualizan los valores desde los campos del recurso personalizado.
+Copiar los charts de esta carpeta a la carpeta `helm-charts/` del proyecto generado y ajustar los valores del chart a los campos definidos en los CRDs.
 
-## Instalacion
+## Instalar
+
+Construir y publicar la imagen del operador:
 
 ```bash
-make docker-build docker-push IMG=$ZOT/mumnk8s/operator:dev
-make deploy IMG=$ZOT/munmk8s/operator:dev
+make docker-build docker-push IMG="$ZOT/mumnk8s/operator:dev"
+```
+
+Instalar los manifests del operador:
+
+```bash
+make deploy IMG="$ZOT/mumnk8s/operator:dev"
+```
+
+Aplicar los recursos del proyecto:
+
+```bash
+kubectl apply -f ../k8s/07-crds.yaml
 kubectl apply -f ../k8s/06-custom-resources.yaml
 ```
+
+## Verificar la reconciliacion
+
+```bash
+kubectl get valkeyinstances,grafanainstances -n mumnk8s
+kubectl get statefulsets,deployments,svc,pvc -n mumnk8s
+kubectl logs -n mumnk8s deployment/mumnk8s-controller-manager -c manager
+```
+
+La instalacion se considera correcta cuando los Custom Resources existen, el operador no presenta errores y los recursos derivados llegan al estado `Ready`.

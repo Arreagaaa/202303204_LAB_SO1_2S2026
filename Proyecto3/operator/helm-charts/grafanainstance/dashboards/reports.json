@@ -1,0 +1,19 @@
+{
+  "title": "MUMNK8s Reportes",
+  "schemaVersion": 39,
+  "tags": ["mumnk8s"],
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Estado del tablero",
+      "gridPos": {"h": 4, "w": 8, "x": 0, "y": 0},
+      "targets": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Reportes por pais",
+      "gridPos": {"h": 8, "w": 16, "x": 8, "y": 0},
+      "targets": []
+    }
+  ]
+}
