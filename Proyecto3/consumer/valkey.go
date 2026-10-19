@@ -21,14 +21,23 @@ func (s *valkeyStore) save(item report) error {
 		return err
 	}
 	defer connection.Close()
+	if err := connection.SetDeadline(time.Now().Add(5 * time.Second)); err != nil {
+		return err
+	}
 	key := "reports:" + item.Country
 	value := fmt.Sprintf(`{"country":"%s","warplanes_in_air":%d,"warships_in_water":%d,"timestamp":"%s"}`,
 		item.Country, item.WarplanesInAir, item.WarshipsInWater, item.Timestamp)
 	if err := writeCommand(connection, "RPUSH", key, value); err != nil {
 		return err
 	}
-	_, err = bufio.NewReader(connection).ReadString('\n')
-	return err
+	response, err := bufio.NewReader(connection).ReadString('\n')
+	if err != nil {
+		return err
+	}
+	if len(response) == 0 || response[0] != ':' {
+		return fmt.Errorf("respuesta inesperada de Valkey: %s", response)
+	}
+	return nil
 }
 
 func writeCommand(connection net.Conn, command string, args ...string) error {

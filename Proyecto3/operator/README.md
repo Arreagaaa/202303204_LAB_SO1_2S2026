@@ -1,74 +1,35 @@
-# Operator Helm-based
+# Operator Helm para Valkey y Grafana
 
-## Proposito
+El contenedor usa la imagen `helm-operator` de Operator SDK, `watches.yaml` y dos charts. Cada Custom Resource activa una reconciliacion independiente. El proyecto incluye Dockerfile, watches, charts, CRDs, RBAC y Deployment del operador. En kind se comprobaron creacion, actualizacion y eliminacion de una instancia Valkey, ademas de la instalacion de Grafana. Falta repetir la prueba en GKE.
 
-El Operator permite administrar Valkey y Grafana mediante recursos personalizados de Kubernetes. El usuario declara el estado deseado en un Custom Resource y el reconciliador Helm crea o actualiza los recursos asociados.
+El esqueleto se armó con el runtime oficial y la estructura del ejemplo de Semana 11, pero no se generó con el comando `operator-sdk init/create api` en este equipo. Si se exige evidencia literal de esos comandos, habrá que regenerar el esqueleto y conservar los charts y CRDs de este repositorio.
 
-## Recursos administrados
+| Kind | Chart | Objetos derivados |
+|---|---|---|
+| `ValkeyInstance` | `helm-charts/valkeyinstance` | StatefulSet, Service y PVC |
+| `GrafanaInstance` | `helm-charts/grafanainstance` | Deployment, Service y ConfigMap; usa el Secret externo `grafana-admin` |
 
-### ValkeyInstance
+Los CRDs estan en `../k8s/07-crds.yaml` y las instancias de ejemplo en `../k8s/06-custom-resources.yaml`. El consumer apunta a `valkey-reports:6379`, nombre generado por el chart para el CR `reports`.
 
-Representa una instancia de Valkey y permite definir:
+## Construir y desplegar
 
-- Numero de replicas.
-- Tamano de almacenamiento.
-
-El chart crea un StatefulSet, un Service y un PVC.
-
-### GrafanaInstance
-
-Representa una instancia de Grafana y permite definir:
-
-- Puerto del Service.
-- Service de Valkey utilizado como datasource.
-
-El chart crea un Deployment, un Service, un Secret y el provisioning inicial de Grafana.
-
-## Crear el proyecto con Operator SDK
-
-Ejecutar desde una carpeta destinada exclusivamente al operador:
+Desde la raiz `Proyecto3`, con `ZOT` configurado y autenticacion HTTPS preparada:
 
 ```bash
-operator-sdk init --plugins helm
-operator-sdk create api \
-  --group mumnk8s \
-  --version v1alpha1 \
-  --kind ValkeyInstance
-operator-sdk create api \
-  --group mumnk8s \
-  --version v1alpha1 \
-  --kind GrafanaInstance
+docker build -f operator/Dockerfile -t "$ZOT/mumnk8s/operator:dev" operator
+docker push "$ZOT/mumnk8s/operator:dev"
+sed -i "s#zot.example#$ZOT#g" k8s/09-operator.yaml
+kubectl apply -f k8s/07-crds.yaml
+kubectl apply -f k8s/09-operator.yaml
+kubectl rollout status deployment/mumnk8s-operator -n mumnk8s
+kubectl apply -f k8s/06-custom-resources.yaml
 ```
-
-Copiar los charts de esta carpeta a la carpeta `helm-charts/` del proyecto generado y ajustar los valores del chart a los campos definidos en los CRDs.
-
-## Instalar
-
-Construir y publicar la imagen del operador:
-
-```bash
-make docker-build docker-push IMG="$ZOT/mumnk8s/operator:dev"
-```
-
-Instalar los manifests del operador:
-
-```bash
-make deploy IMG="$ZOT/mumnk8s/operator:dev"
-```
-
-Aplicar los recursos del proyecto:
-
-```bash
-kubectl apply -f ../k8s/07-crds.yaml
-kubectl apply -f ../k8s/06-custom-resources.yaml
-```
-
-## Verificar la reconciliacion
 
 ```bash
 kubectl get valkeyinstances,grafanainstances -n mumnk8s
-kubectl get statefulsets,deployments,svc,pvc -n mumnk8s
-kubectl logs -n mumnk8s deployment/mumnk8s-controller-manager -c manager
+kubectl get statefulsets,deployments,services,pvc -n mumnk8s
+kubectl logs deployment/mumnk8s-operator -n mumnk8s
+kubectl exec -n mumnk8s statefulset/valkey-reports -- valkey-cli ping
 ```
 
-La instalacion se considera correcta cuando los Custom Resources existen, el operador no presenta errores y los recursos derivados llegan al estado `Ready`.
+Para probar la reconciliacion, cambiar `spec.maxMemory` del ValkeyInstance y observar la actualizacion del StatefulSet. Cambiar `storage` requiere un procedimiento de expansion del PVC; no es una actualizacion ordinaria del StatefulSet. Para comprobar la eliminacion, usar una instancia de prueba aparte y borrar ese CR. La instancia Grafana debe tener un nombre distinto al de Valkey porque Helm usa el nombre del CR como nombre del release; en los manifiestos es `dashboard`.

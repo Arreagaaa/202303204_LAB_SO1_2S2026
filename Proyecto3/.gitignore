@@ -1,0 +1,24 @@
+api-rust/target/
+*.exe
+*.test
+__pycache__/
+
+# Credenciales y configuración personal: nunca versionar valores reales.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.kubeconfig
+kubeconfig*
+*credentials*.json
+*service-account*.json
+*.tfstate
+*.tfstate.*
+.terraform/
+*.secrets.yaml
+*.secret.local.yaml

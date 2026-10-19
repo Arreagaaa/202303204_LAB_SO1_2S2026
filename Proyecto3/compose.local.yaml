@@ -1,0 +1,155 @@
+name: mumnk8s-local
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    environment:
+      RABBITMQ_DEFAULT_USER: mumnk8s
+      RABBITMQ_DEFAULT_PASS: x
+    ports:
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  valkey:
+    image: valkey/valkey:8
+    command: ["valkey-server", "--appendonly", "yes"]
+    volumes:
+      - valkey-data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  go-writer:
+    build:
+      context: .
+      dockerfile: go-writer/Dockerfile
+    image: mumnk8s/go-writer:local
+    environment:
+      PUBLISHER_URL: http://127.0.0.1:8083/publish
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  go-writer-publisher:
+    build:
+      context: .
+      dockerfile: go-writer-publisher/Dockerfile
+    image: mumnk8s/go-writer-publisher:local
+    restart: unless-stopped
+    network_mode: service:go-writer
+    environment:
+      RABBITMQ_ADDRESS: amqp://mumnk8s:x@rabbitmq:5672/
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      go-writer:
+        condition: service_started
+
+  go-ingest:
+    build:
+      context: .
+      dockerfile: go-ingest/Dockerfile
+    image: mumnk8s/go-ingest:local
+    environment:
+      CLIENT_URL: http://127.0.0.1:8082/publish
+    depends_on:
+      go-writer:
+        condition: service_started
+
+  go-ingest-client:
+    build:
+      context: .
+      dockerfile: go-ingest-client/Dockerfile
+    image: mumnk8s/go-ingest-client:local
+    network_mode: service:go-ingest
+    environment:
+      WRITER_ADDRESS: go-writer:50051
+    depends_on:
+      go-ingest:
+        condition: service_started
+
+  api-rust:
+    build:
+      context: .
+      dockerfile: api-rust/Dockerfile
+    image: mumnk8s/api-rust:local
+    environment:
+      INGEST_URL: http://go-ingest:8081/reports
+    ports:
+      - "8080:8080"
+    depends_on:
+      go-ingest:
+        condition: service_started
+
+  consumer:
+    build:
+      context: .
+      dockerfile: consumer/Dockerfile
+    image: mumnk8s/consumer:local
+    restart: unless-stopped
+    environment:
+      RABBITMQ_ADDRESS: amqp://mumnk8s:x@rabbitmq:5672/
+      VALKEY_ADDRESS: valkey:6379
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+
+  metrics:
+    build:
+      context: .
+      dockerfile: metrics/Dockerfile
+    image: mumnk8s/metrics:local
+    environment:
+      VALKEY_ADDRESS: valkey:6379
+    depends_on:
+      valkey:
+        condition: service_healthy
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    volumes:
+      - ./metrics/prometheus.local.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    depends_on:
+      metrics:
+        condition: service_started
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: x
+    ports:
+      - "3300:3000"
+    volumes:
+      - ./metrics/grafana-datasources.local.yml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
+      - ./metrics/grafana-dashboards.local.yml:/etc/grafana/provisioning/dashboards/dashboards.yaml:ro
+      - ./operator/helm-charts/grafanainstance/dashboards/reports.json:/var/lib/grafana/dashboards/reports.json:ro
+    depends_on:
+      prometheus:
+        condition: service_started
+
+  locust:
+    image: locustio/locust:2.31.8
+    profiles: ["load"]
+    volumes:
+      - ./locust/locustfile.py:/mnt/locustfile.py:ro
+    command: -f /mnt/locustfile.py --headless -u 10 -r 2 -t 1m --host http://api-rust:8080
+    depends_on:
+      api-rust:
+        condition: service_started
+
+volumes:
+  rabbitmq-data:
+  valkey-data:
+  prometheus-data:

@@ -18,9 +18,12 @@ spec:
           image: zot.example/mumnk8s/consumer:dev
           env:
             - name: RABBITMQ_ADDRESS
-              value: amqp://guest:x@rabbitmq:5672/
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: uri
             - name: VALKEY_ADDRESS
-              value: valkey:6379
+              value: valkey-reports:6379
           resources:
             requests:
               cpu: 50m
@@ -28,56 +31,3 @@ spec:
             limits:
               cpu: 300m
               memory: 128Mi
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: valkey
-  namespace: mumnk8s
-spec:
-  selector:
-    app: valkey
-  ports:
-    - port: 6379
-      targetPort: 6379
----
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: valkey
-  namespace: mumnk8s
-spec:
-  serviceName: valkey
-  replicas: 1
-  selector:
-    matchLabels:
-      app: valkey
-  template:
-    metadata:
-      labels:
-        app: valkey
-    spec:
-      containers:
-        - name: valkey
-          image: valkey/valkey:8
-          ports:
-            - containerPort: 6379
-          args: ["valkey-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
-          resources:
-            requests:
-              cpu: 50m
-              memory: 128Mi
-            limits:
-              cpu: 300m
-              memory: 384Mi
-          volumeMounts:
-            - name: data
-              mountPath: /data
-  volumeClaimTemplates:
-    - metadata:
-        name: data
-      spec:
-        accessModes: ["ReadWriteOnce"]
-        resources:
-          requests:
-            storage: 1Gi

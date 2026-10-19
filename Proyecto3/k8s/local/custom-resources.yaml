@@ -1,0 +1,24 @@
+apiVersion: mumnk8s.sopes1.usac/v1alpha1
+kind: ValkeyInstance
+metadata:
+  name: reports
+  namespace: mumnk8s
+spec:
+  replicaCount: 1
+  storage: 1Gi
+  maxMemory: 256mb
+  image:
+    repository: valkey/valkey
+    tag: "8"
+---
+apiVersion: mumnk8s.sopes1.usac/v1alpha1
+kind: GrafanaInstance
+metadata:
+  name: dashboard
+  namespace: mumnk8s
+spec:
+  service:
+    port: 3000
+  image:
+    repository: grafana/grafana
+    tag: "11.2.0"

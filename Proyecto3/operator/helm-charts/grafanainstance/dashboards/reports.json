@@ -1,19 +1,278 @@
 {
-  "title": "MUMNK8s Reportes",
+  "uid": "mumnk8s-reports",
+  "title": "M.U.M.N.K8s - Reportes militares",
   "schemaVersion": 39,
-  "tags": ["mumnk8s"],
+  "version": 1,
+  "refresh": "10s",
+  "tags": [
+    "mumnk8s",
+    "202303204"
+  ],
   "panels": [
     {
+      "id": 1,
       "type": "stat",
-      "title": "Estado del tablero",
-      "gridPos": {"h": 4, "w": 8, "x": 0, "y": 0},
-      "targets": []
+      "title": "Maximo de aviones en aire",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 6,
+        "h": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "military_warplanes_max",
+          "instant": true
+        }
+      ]
     },
     {
+      "id": 2,
+      "type": "stat",
+      "title": "Minimo de aviones en aire",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 0,
+        "w": 6,
+        "h": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "military_warplanes_min",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Maximo de barcos en mar",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 6,
+        "h": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "military_warships_max",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Minimo de barcos en mar",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "military_warships_min",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "bargauge",
+      "title": "Top paises por aviones",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(5, military_country_warplanes_total)",
+          "instant": true
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient"
+      }
+    },
+    {
+      "id": 6,
+      "type": "bargauge",
+      "title": "Top paises por barcos",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 5,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(5, military_country_warships_total)",
+          "instant": true
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient"
+      }
+    },
+    {
+      "id": 7,
+      "type": "stat",
+      "title": "Moda de aviones",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 6,
+        "h": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "military_warplanes_mode",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "stat",
+      "title": "Moda de barcos",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 12,
+        "w": 6,
+        "h": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "military_warships_mode",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "text",
+      "title": "Pais asignado por carne 202303204",
+      "gridPos": {
+        "x": 12,
+        "y": 12,
+        "w": 6,
+        "h": 5
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "# CHN\nUltimo digito del carne: 4"
+      }
+    },
+    {
+      "id": 10,
+      "type": "stat",
+      "title": "Reportes recibidos de CHN",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 12,
+        "w": 6,
+        "h": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "military_country_reports_total{country=\"CHN\"}",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "id": 11,
       "type": "timeseries",
-      "title": "Reportes por pais",
-      "gridPos": {"h": 8, "w": 16, "x": 8, "y": 0},
-      "targets": []
+      "title": "CHN: aviones en aire",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 17,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "military_assigned_warplanes",
+          "instant": false
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "CHN: barcos en mar",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 17,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "military_assigned_warships",
+          "instant": false
+        }
+      ]
     }
   ]
 }

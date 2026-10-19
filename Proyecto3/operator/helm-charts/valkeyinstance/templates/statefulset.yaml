@@ -18,10 +18,21 @@ spec:
       containers:
         - name: valkey
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          args: ["valkey-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+          args: ["valkey-server", "--appendonly", "yes", "--maxmemory", {{ .Values.maxMemory | quote }}, "--maxmemory-policy", "allkeys-lru"]
           ports:
             - name: redis
               containerPort: 6379
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 300m
+              memory: 384Mi
+          readinessProbe:
+            exec:
+              command: ["valkey-cli", "ping"]
+            periodSeconds: 5
           volumeMounts:
             - name: data
               mountPath: /data

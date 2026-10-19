@@ -1,5 +1,7 @@
 # M.U.M.N.K8s
 
+**Autor:** Christian Javier Rivas Arreaga · **Carné:** 202303204 · **País asignado:** CHN.
+
 ## Monitoreo de Unidades Militares en la Nube con Kubernetes
 
 Proyecto individual del curso Sistemas Operativos 1. La solucion simula la recepcion y el procesamiento de reportes militares generados desde distintos paises. Cada reporte contiene el pais de origen, la cantidad de aviones en el aire, la cantidad de barcos en el agua y la fecha del evento.
@@ -18,11 +20,11 @@ Gateway API
 API REST en Rust
   |
   v
-Go Ingest
+Go Ingest REST + cliente gRPC (dos contenedores)
   |
   | gRPC
   v
-Go Writer
+Go Server gRPC + publicador RabbitMQ (dos contenedores)
   |
   v
 RabbitMQ
@@ -31,7 +33,7 @@ RabbitMQ
 Consumer Go
   |
   v
-Valkey
+Valkey -> exporter -> Prometheus
   |
   v
 Grafana
@@ -39,7 +41,7 @@ Grafana
 
 ## Estado del proyecto
 
-La implementacion actual cubre la base funcional y de despliegue del flujo principal. Los componentes que dependen de una cuenta de GCP, una VM con Zot o un cluster GKE deben validarse en el ambiente correspondiente.
+El codigo Go compila y sus pruebas pasan; los charts Helm renderizan. Aun falta validar los contenedores, la reconciliacion del operador, el flujo completo y la carga en Kubernetes/GKE. El detalle y el porcentaje estimado estan en [docs/estado-proyecto.md](docs/estado-proyecto.md).
 
 | Componente | Estado |
 |---|---|
@@ -53,6 +55,8 @@ La implementacion actual cubre la base funcional y de despliegue del flujo princ
 | HPA de Rust | Preparado |
 | Prueba de carga con Locust | Preparada |
 | Charts Helm de Valkey y Grafana | Preparados |
+| Operator Helm, RBAC y watches | Preparados; falta reconciliacion en GKE |
+| Exporter, Prometheus y dashboard de 12 paneles | Preparados; falta validacion visual |
 | CRDs y Custom Resources | Preparados |
 | Regla personalizada de Falco | Preparada |
 | Publicacion de imagenes en Zot | Requiere ambiente GCP |
@@ -64,12 +68,13 @@ La implementacion actual cubre la base funcional y de despliegue del flujo princ
 | Ruta | Responsabilidad |
 |---|---|
 | `api-rust/` | API publica y validacion de reportes |
-| `go-ingest/` | Endpoint interno y cliente gRPC |
-| `go-writer/` | Servidor gRPC y publicador RabbitMQ |
+| `go-ingest/`, `go-ingest-client/` | Endpoint REST y cliente gRPC |
+| `go-writer/`, `go-writer-publisher/` | Servidor gRPC y publicador RabbitMQ |
 | `consumer/` | Consumidor RabbitMQ y persistencia en Valkey |
 | `proto/` | Contrato del servicio gRPC |
 | `k8s/` | Namespace, deployments, services, Gateway, HPA, CRDs y reglas |
-| `operator/` | Charts Helm para Valkey y Grafana |
+| `operator/` | Helm Operator y charts para Valkey y Grafana |
+| `metrics/` | Exporter Valkey para Prometheus |
 | `locust/` | Generador de carga |
 | `scripts/` | Validaciones reproducibles desde WSL2 |
 | `docs/` | Documentacion de instalacion, arquitectura y evidencias |

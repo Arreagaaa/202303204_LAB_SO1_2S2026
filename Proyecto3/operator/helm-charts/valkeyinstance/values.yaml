@@ -1,5 +1,6 @@
 replicaCount: 1
 storage: 1Gi
+maxMemory: 256mb
 image:
-  repository: valkey/valkey
+  repository: zot.example/mumnk8s/valkey
   tag: "8"

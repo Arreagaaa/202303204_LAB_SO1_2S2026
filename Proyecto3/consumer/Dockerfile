@@ -1,5 +1,7 @@
 FROM golang:1.22-bookworm AS build
 WORKDIR /src
+COPY go.mod .
+COPY proto ./proto
 COPY consumer ./consumer
 WORKDIR /src/consumer
 RUN go build -o /out/consumer .

@@ -2,7 +2,9 @@ go 1.22
 
 use (
 	.
-	./go-ingest
-	./go-writer
 	./consumer
+	./go-ingest
+	./go-ingest-client
+	./go-writer
+	./go-writer-publisher
 )

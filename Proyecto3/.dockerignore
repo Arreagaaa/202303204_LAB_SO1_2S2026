@@ -1,0 +1,8 @@
+.git
+api-rust/target
+**/__pycache__
+docs
+k8s
+locust
+scripts
+operator

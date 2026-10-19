@@ -1,0 +1,6 @@
+global:
+  scrape_interval: 10s
+scrape_configs:
+  - job_name: military-reports
+    static_configs:
+      - targets: ["metrics:9091"]

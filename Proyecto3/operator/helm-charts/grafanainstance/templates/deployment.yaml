@@ -18,18 +18,40 @@ spec:
           ports:
             - name: http
               containerPort: 3000
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests: {cpu: 100m, memory: 128Mi}
+            limits: {cpu: 500m, memory: 512Mi}
           env:
             - name: GF_SECURITY_ADMIN_USER
               value: admin
             - name: GF_SECURITY_ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "grafanainstance.fullname" . }}
+                  name: {{ .Values.adminSecretName }}
                   key: admin-password
           volumeMounts:
             - name: provisioning
-              mountPath: /etc/grafana/provisioning
+              mountPath: /etc/grafana/provisioning/datasources/datasources.yaml
+              subPath: datasources.yaml
+            - name: dashboards-provider
+              mountPath: /etc/grafana/provisioning/dashboards/dashboards.yaml
+              subPath: dashboards.yaml
+            - name: dashboards
+              mountPath: /var/lib/grafana/dashboards/reports.json
+              subPath: dashboard.json
       volumes:
         - name: provisioning
+          configMap:
+            name: {{ include "grafanainstance.fullname" . }}
+        - name: dashboards-provider
+          configMap:
+            name: {{ include "grafanainstance.fullname" . }}
+        - name: dashboards
           configMap:
             name: {{ include "grafanainstance.fullname" . }}

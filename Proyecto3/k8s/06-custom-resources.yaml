@@ -4,15 +4,15 @@ metadata:
   name: reports
   namespace: mumnk8s
 spec:
-  replicas: 1
+  replicaCount: 1
   storage: 1Gi
+  maxMemory: 256mb
 ---
 apiVersion: mumnk8s.sopes1.usac/v1alpha1
 kind: GrafanaInstance
 metadata:
-  name: reports
+  name: dashboard
   namespace: mumnk8s
 spec:
   service:
     port: 3000
-  valkeyService: valkey

@@ -1,9 +1,10 @@
-FROM rust:1.82-bookworm AS build
+FROM rust:1.99-bookworm AS build
 WORKDIR /src
 COPY api-rust/Cargo.toml ./api-rust/Cargo.toml
+COPY api-rust/Cargo.lock ./api-rust/Cargo.lock
 COPY api-rust/src ./api-rust/src
 WORKDIR /src/api-rust
-RUN cargo build --release
+RUN cargo build --release --locked
 
 FROM debian:bookworm-slim
 COPY --from=build /src/api-rust/target/release/api-rust /usr/local/bin/api-rust

@@ -1,16 +1,13 @@
 package main
 
 import (
-	"context"
+	"bytes"
 	"encoding/json"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"time"
-
-	pb "proyecto3/proto"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type report struct {
@@ -20,52 +17,62 @@ type report struct {
 	Timestamp       string `json:"timestamp"`
 }
 
+func validReport(item report) bool {
+	switch item.Country {
+	case "USA", "RUS", "CHN", "ESP", "GTM":
+	default:
+		return false
+	}
+	if item.WarplanesInAir < 0 || item.WarplanesInAir > 50 || item.WarshipsInWater < 0 || item.WarshipsInWater > 30 {
+		return false
+	}
+	_, err := time.Parse(time.RFC3339Nano, item.Timestamp)
+	return err == nil
+}
+
 func main() {
-	target := os.Getenv("WRITER_ADDRESS")
-	if target == "" {
-		target = "go-writer:50051"
+	clientURL := os.Getenv("CLIENT_URL")
+	if clientURL == "" {
+		clientURL = "http://127.0.0.1:8082/publish"
 	}
-
-	conn, err := grpc.Dial(target, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Fatalf("no se pudo conectar con el escritor: %v", err)
-	}
-	defer conn.Close()
-
-	client := pb.NewWarReportServiceClient(conn)
+	client := &http.Client{Timeout: 6 * time.Second}
 	http.HandleFunc("/reports", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "metodo no permitido", http.StatusMethodNotAllowed)
 			return
 		}
 		var input report
-		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		if err := json.NewDecoder(io.LimitReader(r.Body, 1<<20)).Decode(&input); err != nil {
 			http.Error(w, "JSON invalido", http.StatusBadRequest)
 			return
 		}
-		if input.Country == "" || input.Timestamp == "" || input.WarplanesInAir < 0 || input.WarshipsInWater < 0 {
+		if !validReport(input) {
 			http.Error(w, "reporte incompleto", http.StatusBadRequest)
 			return
 		}
-
-		_, err := client.SendReport(context.Background(), &pb.WarReportRequest{
-			Country: input.Country, WarplanesInAir: input.WarplanesInAir,
-			WarshipsInWater: input.WarshipsInWater, Timestamp: input.Timestamp,
-		})
+		body, _ := json.Marshal(input)
+		request, err := http.NewRequestWithContext(r.Context(), http.MethodPost, clientURL, bytes.NewReader(body))
 		if err != nil {
-			log.Printf("fallo al enviar reporte: %v", err)
+			http.Error(w, "cliente no disponible", http.StatusBadGateway)
+			return
+		}
+		request.Header.Set("Content-Type", "application/json")
+		response, err := client.Do(request)
+		if err != nil {
+			log.Printf("fallo cliente gRPC: %v", err)
+			http.Error(w, "cliente no disponible", http.StatusBadGateway)
+			return
+		}
+		defer response.Body.Close()
+		if response.StatusCode != http.StatusAccepted {
 			http.Error(w, "no se pudo procesar el reporte", http.StatusBadGateway)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusAccepted)
 		_, _ = w.Write([]byte(`{"status":"accepted"}`))
 	})
-	http.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("ok"))
-	})
-
+	http.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write([]byte("ok")) })
 	server := &http.Server{Addr: ":8081", ReadHeaderTimeout: 5 * time.Second}
-	log.Printf("go-ingest escuchando en %s", server.Addr)
 	log.Fatal(server.ListenAndServe())
 }

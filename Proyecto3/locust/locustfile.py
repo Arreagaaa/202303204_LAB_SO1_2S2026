@@ -14,4 +14,4 @@ class MilitaryReportUser(HttpUser):
             "warships_in_water": random.randint(0, 30),
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
-        self.client.post("/grpc-2023204", json=payload, name="/grpc-2023204")
+        self.client.post("/grpc-202303204", json=payload, name="/grpc-202303204")

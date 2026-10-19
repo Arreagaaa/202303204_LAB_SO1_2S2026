@@ -1,0 +1,8 @@
+- group: mumnk8s.sopes1.usac
+  version: v1alpha1
+  kind: ValkeyInstance
+  chart: helm-charts/valkeyinstance
+- group: mumnk8s.sopes1.usac
+  version: v1alpha1
+  kind: GrafanaInstance
+  chart: helm-charts/grafanainstance

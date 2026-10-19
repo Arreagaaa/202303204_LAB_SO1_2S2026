@@ -1,5 +1,9 @@
 # Manual tecnico
 
+**Autor:** Christian Javier Rivas Arreaga, carné **202303204**. País asignado por último dígito (4): **CHN**.
+
+**Estado:** implementación de código y manifiestos preparada; compilación Go, validación Helm y pruebas de extremo a extremo en Compose y kind ejecutadas. Despliegue GKE y evidencias de carga en la nube pendientes.
+
 ## 1. Descripcion general
 
 M.U.M.N.K8s es un sistema distribuido para recibir, transportar, procesar y almacenar reportes militares simulados. El proyecto usa servicios independientes para representar un flujo de eventos en tiempo real dentro de Kubernetes.
@@ -42,9 +46,17 @@ API Rust :8080
       v
 Service go-ingest :8081
       |
-      | gRPC
+      | HTTP localhost:8082
+      v
+Cliente gRPC (segundo contenedor de go-ingest)
+      |
+      | protobuf/gRPC
       v
 Service go-writer :50051
+      |
+      | HTTP localhost:8083
+      v
+Publicador RabbitMQ (segundo contenedor de go-writer)
       |
       | AMQP
       v
@@ -59,10 +71,10 @@ Consumer Go
 Valkey :6379
       |
       v
-Grafana
+Exporter de metricas :9091 -> Prometheus :9090 -> Grafana
 ```
 
-El cluster se ejecuta en GKE. Zot se aloja en una VM N1 separada y funciona como registry privado para las imagenes del proyecto.
+El destino previsto es GKE. Zot deberá alojarse en una VM N1 separada y servir como registry HTTPS; ese despliegue no se ha ejecutado todavía.
 
 ## 3. Componentes
 
@@ -81,7 +93,7 @@ Responsabilidades:
 Endpoint:
 
 ```text
-POST /grpc-2023204
+POST /grpc-202303204
 ```
 
 Aunque el nombre de la ruta identifica el flujo gRPC solicitado por el enunciado, la entrada publica es HTTP REST. El intercambio gRPC ocurre entre los servicios Go.
@@ -94,8 +106,8 @@ Responsabilidades:
 
 - Recibir el reporte desde Rust.
 - Validar que los campos basicos esten presentes.
-- Convertir el JSON a la estructura del contrato gRPC.
-- Invocar `SendReport` en `go-writer`.
+- Reenviar el JSON al contenedor cliente gRPC del mismo pod.
+- El contenedor `go-ingest-client` convierte el JSON al contrato protobuf e invoca `SendReport` en `go-writer`.
 
 Endpoint interno:
 
@@ -110,10 +122,10 @@ Ubicacion: `go-writer/`.
 Responsabilidades:
 
 - Implementar el servidor gRPC.
-- Declarar la cola durable `military-reports`.
-- Serializar cada solicitud recibida.
-- Publicarla en RabbitMQ.
-- Devolver confirmacion al cliente gRPC.
+- Recibir `SendReport` en el contenedor servidor gRPC.
+- Serializar la solicitud y enviarla al contenedor publicador del mismo pod.
+- El contenedor `go-writer-publisher` declara la cola durable `military-reports`, publica mensajes persistentes y espera confirmacion de RabbitMQ.
+- Devolver confirmacion al cliente gRPC tras recibirla del broker.
 
 ### 3.4. Consumer
 
@@ -141,7 +153,7 @@ Cada reporte se guarda como un elemento de una lista mediante `RPUSH`.
 
 ### 3.5. RabbitMQ
 
-RabbitMQ es el broker obligatorio del flujo principal. La cola se declara durable para conservar la configuracion ante reinicios del broker.
+RabbitMQ es el broker obligatorio del flujo principal. Se prepara como StatefulSet con PVC de 2 GiB. La cola se declara durable y los mensajes se publican en modo persistente. El usuario y la contraseña se obtienen del Secret `rabbitmq-credentials`, creado fuera de Git antes de desplegar.
 
 ### 3.6. Valkey
 
@@ -158,11 +170,11 @@ Grafana se administra mediante un chart Helm. El chart contiene:
 
 - Deployment.
 - Service.
-- Secret de acceso administrativo.
+- Referencia al Secret externo `grafana-admin` para el acceso administrativo.
 - Configuracion de datasource.
 - Provisioning de dashboards.
 
-El datasource utiliza el plugin Redis y apunta al Service de Valkey.
+El datasource integrado de Prometheus apunta a `prometheus:9090`. El exporter `metrics` lee las listas `reports:*` de Valkey y publica `/metrics` con máximos, mínimos, modas, totales por país y la última muestra de CHN. Prometheus conserva la serie de muestras para las gráficas temporales. El dashboard provisionado tiene doce paneles y usa CHN porque el carné termina en 4. Grafana local cargó el dashboard; falta revisar visualmente cada panel en GKE.
 
 ## 4. Comunicacion gRPC
 
@@ -186,7 +198,7 @@ El recurso `Gateway` utiliza la clase:
 gke-l7-global-external-managed
 ```
 
-El recurso `HTTPRoute` enruta el prefijo `/grpc-2023204` al Service `api-rust` en el puerto 80. Esta configuracion reemplaza el uso de un Ingress Controller, tal como solicita el enunciado.
+El recurso `HTTPRoute` enruta el prefijo `/grpc-202303204` al Service `api-rust` en el puerto 80. Esta configuracion reemplaza el uso de un Ingress Controller, tal como solicita el enunciado.
 
 ## 6. Escalamiento y recursos
 
@@ -212,9 +224,9 @@ El Operator contempla dos recursos personalizados:
 
 Los CRDs se encuentran en `k8s/07-crds.yaml` y los recursos de ejemplo en `k8s/06-custom-resources.yaml`.
 
-El chart de Valkey crea un StatefulSet, un Service y un PVC. El chart de Grafana crea un Deployment, un Service, un Secret y un ConfigMap con datasource y dashboard.
+El chart de Valkey crea un StatefulSet, un Service y un PVC. El chart de Grafana crea un Deployment, un Service y un ConfigMap con datasource y dashboard; lee la contraseña administrativa del Secret externo `grafana-admin`.
 
-La carpeta `operator/` contiene los charts base que se deben integrar al proyecto generado por Operator SDK. La reconciliacion final debe comprobarse dentro del cluster observando los recursos creados despues de aplicar cada Custom Resource.
+La carpeta `operator/` contiene `Dockerfile`, `watches.yaml` y ambos charts. `k8s/09-operator.yaml` aporta el ServiceAccount, RBAC y Deployment. En kind se comprobó que el Helm Operator instala, actualiza y desinstala los recursos derivados del CR. La prueba debe repetirse en GKE.
 
 ## 8. Seguridad con Falco
 
@@ -224,6 +236,24 @@ La regla personalizada detecta intentos de lectura de:
 - `/app/secretos`.
 
 La regla se limita a contenedores cuyas imagenes pertenecen al proyecto. El procedimiento de instalacion y la evidencia esperada estan en `docs/falco.md`.
+
+Regla personalizada preparada en `k8s/falco-values.yaml`:
+
+```yaml
+- rule: MUMNK8s sensitive file read
+  desc: Detecta lectura de archivos sensibles en pods del proyecto
+  condition: >
+    open_read and container and
+    (fd.name=/etc/shadow or fd.name startswith /app/secretos) and
+    (container.image.repository contains "mumnk8s")
+  output: >
+    MUMNK8s intento de leer archivo sensible
+    (user=%user.name command=%proc.cmdline file=%fd.name container=%container.name)
+  priority: WARNING
+  tags: [mumnk8s, filesystem]
+```
+
+La captura de la alerta real se añadira despues de ejecutar la simulacion en GKE.
 
 ## 9. HPA, Locust y evidencias
 
@@ -245,6 +275,18 @@ Las capturas deben incorporarse al manual final junto con una explicacion breve 
 - Zot requiere un dominio HTTPS real y confianza del certificado en los nodos.
 - Gateway API depende de la disponibilidad de la GatewayClass en GKE.
 - HPA requiere metricas disponibles mediante Metrics Server.
-- Los dashboards de Grafana necesitan consultas finales contra el datasource instalado.
-- La ruta `/dapr-2023204` es opcional y no forma parte del flujo base.
+- El dashboard está provisionado en Grafana local y las métricas muestran datos reales; verificar visualmente todos los paneles y su comportamiento en GKE.
+- El contrato `.proto` genera `report.pb.go` y `report_grpc.pb.go`; cliente y servidor usan protobuf estándar. El writer convierte la solicitud a JSON con nombres de campo del proto antes de publicarla en RabbitMQ.
+- Los deployments `go-ingest` y `go-writer` incluyen dos contenedores cada uno. Falta validar su comunicación bajo carga en GKE.
+- La ruta `/dapr-202303204` es opcional y no forma parte del flujo base.
 - Las capturas de GCP, Zot, GKE, Locust, HPA y Falco deben generarse en el ambiente real de pruebas.
+
+## 11. Pruebas realizadas y conclusiones provisionales
+
+El 19 de octubre de 2026 se ejecutaron las pruebas Go de todos los módulos y `go vet`; ambas validaciones finalizaron sin errores. Las cuatro pruebas unitarias de la API Rust pasaron. Ambos charts pasaron `helm lint` y `helm template`; los 29 recursos de Kubernetes se leyeron sin identidades duplicadas. El dashboard JSON contiene doce paneles.
+
+También se construyeron las ocho imágenes con Docker Engine en WSL Ubuntu. Docker Compose confirmó el flujo API Rust → Go → RabbitMQ → consumer → Valkey; un reporte CHN quedó almacenado, Prometheus leyó sus métricas y Grafana cargó el dashboard provisionado. La primera prueba de carga reveló un problema de arranque del publicador; tras añadir reinicio automático en Compose, Locust ejecutó 1857 solicitudes en un minuto con 10 usuarios y 0 fallos (mediana de 8 ms, percentil 95 de 14 ms). Estos números describen solo el equipo local.
+
+En kind se instaló el Helm Operator. Creó Valkey y Grafana desde CRs separados; actualizar `spec.maxMemory` cambió el StatefulSet de Valkey y el dato CHN sobrevivió al reinicio. También se creó y eliminó una instancia Valkey de prueba. Envoy Gateway recibió reportes mediante la HTTPRoute. Metrics Server alimentó al HPA, que aumentó la API Rust de una a tres réplicas durante 90 segundos de Locust: 10873 solicitudes, 0 fallos, mediana de 480 ms y percentil 95 de 660 ms. La cola RabbitMQ se drenó tras la prueba. El Gateway local no obtuvo IP externa porque kind no proporciona un LoadBalancer; se comprobó por `port-forward`.
+
+Faltan la prueba de Zot, la GatewayClass de GKE y la comparación controlada de una y dos réplicas en GKE. Estas mediciones de kind describen solo el equipo local.
