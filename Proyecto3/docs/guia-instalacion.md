@@ -112,6 +112,25 @@ docker compose -f compose.local.yaml down
 
 ### 4.1. Kubernetes local con kind
 
+Para repetir toda la validación local desde una sola terminal WSL, usar el script de ensayo. Ejecuta pruebas de Go y Rust, valida Helm, levanta Compose y corre su carga, despliega o actualiza kind, espera el Service de Envoy, prueba la carga por Gateway y comprueba HPA, RabbitMQ, Valkey y Grafana. Al terminar muestra la URL del dashboard y mantiene abierto su acceso mientras la terminal siga abierta; `Ctrl+C` lo cierra. El Compose del ensayo se detiene automáticamente y kind queda disponible para inspección.
+
+```bash
+cd /mnt/d/2S2026/SOPES1/LAB/202303204_LAB_SO1_2S2026/Proyecto3
+bash scripts/test-local-full.sh
+```
+
+Si las pruebas ya terminaron y solo se quiere volver a abrir el dashboard, sin repetir la carga:
+
+```bash
+bash scripts/test-local-full.sh --dashboard-only
+```
+
+Para recrear el clúster `mumnk8s-demo` desde cero, usar `--fresh`. Esta opción borra los datos locales de ese clúster, incluidos sus PVC; no afecta otros clústeres ni GCP.
+
+```bash
+bash scripts/test-local-full.sh --fresh
+```
+
 En WSL se probo un cluster `kind` llamado `mumnk8s-test`. Las herramientas `kind`, `kubectl` y `helm` se instalaron en `~/.local/bin`. Construir primero las ocho imagenes de aplicacion con las etiquetas `mumnk8s/<servicio>:local` y ejecutar:
 
 ```bash

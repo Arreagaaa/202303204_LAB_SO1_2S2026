@@ -57,11 +57,22 @@ func main() {
 	if queue == "" {
 		queue = "military-reports"
 	}
-	conn, err := amqp091.Dial(address)
-	if err != nil {
-		log.Fatal(err)
+	var conn *amqp091.Connection
+	var err error
+	for {
+		conn, err = amqp091.Dial(address)
+		if err == nil {
+			break
+		}
+		log.Printf("RabbitMQ no disponible; reintentando en 2 segundos: %v", err)
+		time.Sleep(2 * time.Second)
 	}
 	defer conn.Close()
+	go func() {
+		if reason, ok := <-conn.NotifyClose(make(chan *amqp091.Error, 1)); ok {
+			log.Fatalf("se cerro la conexion con RabbitMQ: %v", reason)
+		}
+	}()
 	channel, err := conn.Channel()
 	if err != nil {
 		log.Fatal(err)

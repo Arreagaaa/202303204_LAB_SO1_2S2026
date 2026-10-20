@@ -25,9 +25,15 @@ func main() {
 	if queue == "" {
 		queue = "military-reports"
 	}
-	conn, err := amqp091.Dial(address)
-	if err != nil {
-		log.Fatalf("no se pudo conectar con RabbitMQ: %v", err)
+	var conn *amqp091.Connection
+	var err error
+	for {
+		conn, err = amqp091.Dial(address)
+		if err == nil {
+			break
+		}
+		log.Printf("RabbitMQ no disponible; reintentando en 2 segundos: %v", err)
+		time.Sleep(2 * time.Second)
 	}
 	defer conn.Close()
 	channel, err := conn.Channel()
