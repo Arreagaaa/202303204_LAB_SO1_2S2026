@@ -19,7 +19,7 @@ El sistema está desplegado en el proyecto GCP `ID_DEL_PROYECTO`. GKE tiene un n
 1. Entregar el repositorio privado y el manual Markdown en UEDI antes del plazo indicado por la cátedra. Confirmar el acceso de los revisores exigidos por el enunciado.
 2. Preparar la demostración y defensa oral. El funcionamiento observado no sustituye la evaluación del auxiliar.
 3. Revisar el consumo de GCP cada día y eliminar recursos cuando termine la evaluación. La alerta mensual de USD 25 no detiene los cargos.
-4. Guardar las capturas de funcionamiento que pide el enunciado. Los resultados escritos ya están en [evidencia-gcp.md](evidencia-gcp.md).
+4. Llevar abiertas las capturas de [evidencias/](evidencias/README.md) y las pantallas del sistema para la evaluación presencial.
 5. Consultar al auxiliar si la comparación local de Valkey ya documentada satisface el criterio o si exige además una demostración en GKE. La prueba cloud tendría que ser aislada del Valkey activo.
 
 Dapr era opcional y no se implementó. El enunciado menciona Gateway API explícitamente; se usó Gateway API aunque una tabla secundaria conserve la palabra Ingress.

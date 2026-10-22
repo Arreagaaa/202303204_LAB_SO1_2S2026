@@ -41,7 +41,7 @@ Grafana
 
 ## Estado del proyecto
 
-El flujo completo funciona en GKE: Zot sirve las imágenes, Gateway enruta a la API, el operador reconcilia Valkey y Grafana, y Prometheus alimenta los doce paneles. La carga de Locust y una alerta real de Falco están documentadas en [docs/evidencia-gcp.md](docs/evidencia-gcp.md). Quedan pendientes las capturas, la entrega en UEDI y la defensa del proyecto.
+El flujo completo funciona en GKE: Zot sirve las imágenes, Gateway enruta a la API, el operador reconcilia Valkey y Grafana, y Prometheus alimenta los doce paneles. La carga de Locust y una alerta real de Falco están documentadas en [docs/evidencia-gcp.md](docs/evidencia-gcp.md), con [capturas](docs/evidencias/README.md). Quedan pendientes la entrega en UEDI y la defensa del proyecto.
 
 | Componente | Estado |
 |---|---|

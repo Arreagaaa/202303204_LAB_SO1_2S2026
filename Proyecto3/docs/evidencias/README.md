@@ -9,5 +9,9 @@ Capturas recibidas el 22 de octubre de 2026. Muestran el estado en el momento in
 | [grafana-locust.png](grafana-locust.png) | Grafana y Locust visibles durante la carga |
 | [locust-estadisticas.png](locust-estadisticas.png) | POST a `/grpc-202303204` y cero fallos |
 | [locust-graficas.png](locust-graficas.png) | Solicitudes/s, latencia y usuarios de Locust |
+| [gke-nodo-pods.png](gke-nodo-pods.png) | Nodo GKE `Ready` y pods de aplicación `Running` |
+| [gateway-hpa-operator.png](gateway-hpa-operator.png) | Gateway programado, HPA y recursos personalizados del operador |
+| [valkey-datos.png](valkey-datos.png) | CRs de Valkey/Grafana y cinco claves en Valkey |
+| [falco-api-rust.png](falco-api-rust.png) | Alerta real de Falco desde el pod de la API Rust |
 
-Pendientes para una carpeta completa de evidencia visual: nodos y pods GKE, Gateway/HTTPRoute, HPA durante escalamiento, CRs y almacenamiento Valkey, y alerta de Falco desde `api-rust`. El log de Falco está transcrito en el manual, pero el enunciado exige además una captura.
+El HPA aparece configurado en la captura, con una réplica después de la carga. Su aumento a dos réplicas durante la prueba anterior está registrado en [evidencia-gcp.md](../evidencia-gcp.md); esta captura no muestra el instante del escalamiento.

@@ -265,7 +265,9 @@ Regla personalizada preparada en `k8s/falco-values.yaml`:
   tags: [mumnk8s, filesystem]
 ```
 
-El 22 de octubre se produjo en GKE una alerta desde el pod `api-rust` al ejecutar `cat /proc/1/environ >/dev/null`. Falco registró el comando, archivo, contenedor, pod y namespace; el contenido sensible no se imprimió. El procedimiento reproducible está en [falco.md](falco.md). La captura del log queda a cargo del estudiante antes de la entrega.
+El 22 de octubre se produjo en GKE una alerta desde el pod `api-rust` al ejecutar `cat /proc/1/environ >/dev/null`. Falco registró el comando, archivo, contenedor, pod y namespace; el contenido sensible no se imprimió. El procedimiento reproducible está en [falco.md](falco.md). La captura muestra la orden y la alerta del mismo ensayo:
+
+![Alerta de Falco desde api-rust](evidencias/falco-api-rust.png)
 
 ```text
 17:00:47.577281331: Warning MUMNK8s intento de leer archivo sensible (user=<NA> command=cat /proc/1/environ file=/proc/1/environ container=api-rust) container_id=db6a71364757 container_name=api-rust container_image_repository=203-0-113-10.sslip.io/mumnk8s/api-rust container_image_tag=dev k8s_pod_name=api-rust-5fd9b8d4b8-5ljtb k8s_ns_name=mumnk8s
@@ -284,7 +286,7 @@ Cada prueba debe registrar:
 7. Estado de RabbitMQ.
 8. Reportes almacenados en Valkey.
 
-Los resultados medidos y los comandos de comprobación están en [evidencia-gcp.md](evidencia-gcp.md). Las capturas de Zot, Grafana y Locust están en [evidencias/](evidencias/README.md). Faltan las capturas de GKE/pods, Gateway, HPA, Valkey y Falco; la del log de Falco debe incluirse en este manual antes de la entrega. La comparación de Valkey se realizó localmente como se describe arriba; corresponde al evaluador aclarar si requiere una segunda demostración en GKE.
+Los resultados medidos y los comandos de comprobación están en [evidencia-gcp.md](evidencia-gcp.md). Las capturas de Zot, Grafana, Locust, GKE, Gateway, HPA configurado, Valkey y Falco están en [evidencias/](evidencias/README.md). La comparación de Valkey se realizó localmente como se describe arriba; corresponde al evaluador aclarar si requiere una segunda demostración en GKE.
 
 ## 10. Limitaciones conocidas
 

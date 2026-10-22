@@ -52,4 +52,4 @@ Con el túnel abierto, Grafana está en `http://localhost:13000/d/mumnk8s-report
 
 ## Límites y entrega
 
-El presupuesto de USD 25 es una alerta, **no un límite de gasto**. VM, nodo GKE, discos y balanceador siguen consumiendo crédito mientras existan. La consola de facturación mostraba USD 0.00 para este proyecto en la última consulta, pero los cargos pueden aparecer con retraso. Este archivo conserva mediciones y comandos; todavía hay que guardar las capturas exigidas por el enunciado, entregar en UEDI y defender el proyecto ante el auxiliar. Dapr es opcional y no se desplegó.
+El presupuesto de USD 25 es una alerta, **no un límite de gasto**. VM, nodo GKE, discos y balanceador siguen consumiendo crédito mientras existan. La consola de facturación mostraba USD 0.00 para este proyecto en la última consulta, pero los cargos pueden aparecer con retraso. Este archivo conserva mediciones y comandos; las capturas están en [evidencias/](evidencias/README.md). Quedan la entrega en UEDI y la defensa ante el auxiliar. Dapr es opcional y no se desplegó.
