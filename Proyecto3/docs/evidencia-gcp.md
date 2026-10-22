@@ -18,6 +18,17 @@ Verificado el 21 de octubre de 2026 (hora de Guatemala) en el proyecto `ID_DEL_P
 
 Locust 2.31.8 ejecutó 50 usuarios durante 90 segundos contra el Gateway: **6569 POST, 0 fallos, 74,58 solicitudes/s**, media 353 ms, mediana 240 ms, p95 810 ms y p99 2900 ms. El HPA de Rust pasó de una a dos réplicas durante la carga y regresó a una después. La cola RabbitMQ terminó con cero mensajes pendientes y cero sin confirmar. Son valores de esa ejecución, no garantías de rendimiento futuras.
 
+### Comparación de servicios Go: una y dos réplicas
+
+Se repitió Locust contra el mismo Gateway con 20 usuarios, rampa de 5 usuarios/s y 45 segundos por ejecución. `go-ingest` y `go-writer` se escalaron juntos; Rust quedó en una réplica. Los datos y la carga acumulada de Valkey no se reiniciaron entre ejecuciones, por lo que esto es una comparación práctica corta, no un experimento estadístico aislado.
+
+| Réplicas de cada deployment Go | POST | Fallos | Solicitudes/s | Mediana | p95 |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 2032 | 0 | 47,88 | 99 ms | 130 ms |
+| 2 | 2136 | 0 | 47,90 | 100 ms | 140 ms |
+
+Con esta carga el rendimiento fue parecido y dos réplicas no mejoraron el p95. Ambos deployments se restauraron a una réplica y quedaron listos; el HPA de Rust conserva `minReplicas=1`, `maxReplicas=3` y objetivo CPU 30 %.
+
 ## Falco
 
 Falco 0.45.1 quedó en un DaemonSet listo con driver modern eBPF. Su imagen, `falcoctl` y el plugin OCI de contenedores con su firma se sirvieron desde Zot. Una lectura de `/app/secretos/comprobacion` dentro de `rabbitmq-0` produjo la alerta personalizada `MUMNK8s intento de leer archivo sensible`, con proceso `cat`, archivo, contenedor, pod y namespace en el registro. El archivo de prueba fue eliminado. Véase [falco.md](falco.md) para repetir la prueba.
