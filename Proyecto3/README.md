@@ -41,7 +41,7 @@ Grafana
 
 ## Estado del proyecto
 
-El codigo Go compila y sus pruebas pasan; los charts Helm renderizan. Aun falta validar los contenedores, la reconciliacion del operador, el flujo completo y la carga en Kubernetes/GKE. El detalle y el porcentaje estimado estan en [docs/estado-proyecto.md](docs/estado-proyecto.md).
+El flujo completo funciona en GKE: Zot sirve las imagenes, Gateway enruta a la API, el operador reconcilia Valkey y Grafana, y Prometheus alimenta los doce paneles. La carga de Locust y una alerta real de Falco estan documentadas en [docs/evidencia-gcp.md](docs/evidencia-gcp.md). La entrega en UEDI y la defensa del proyecto siguen siendo pasos del estudiante.
 
 | Componente | Estado |
 |---|---|
@@ -55,12 +55,12 @@ El codigo Go compila y sus pruebas pasan; los charts Helm renderizan. Aun falta 
 | HPA de Rust | Preparado |
 | Prueba de carga con Locust | Preparada |
 | Charts Helm de Valkey y Grafana | Preparados |
-| Operator Helm, RBAC y watches | Preparados; falta reconciliacion en GKE |
-| Exporter, Prometheus y dashboard de 12 paneles | Preparados; falta validacion visual |
+| Operator Helm, RBAC y watches | Funcionando en GKE; scaffold generado con Operator SDK |
+| Exporter, Prometheus y dashboard de 12 paneles | Funcionando con datos reales en GKE |
 | CRDs y Custom Resources | Preparados |
-| Regla personalizada de Falco | Preparada |
-| Publicacion de imagenes en Zot | Requiere ambiente GCP |
-| Despliegue final en GKE | Requiere ambiente GCP |
+| Regla personalizada de Falco | Alerta comprobada en GKE |
+| Publicacion de imagenes en Zot | Comprobada en HTTPS, incluido artefacto OCI |
+| Despliegue final en GKE | Activo y validado |
 | Ruta opcional con Dapr | Pendiente |
 
 ## Estructura del repositorio
@@ -97,3 +97,5 @@ Para comprender la arquitectura y el flujo de datos, consultar [docs/manual-tecn
 - [Operator Helm-based](operator/README.md)
 - [Falco](docs/falco.md)
 - [OCI Artifact en Zot](docs/oci-artifact.md)
+- [Despliegue en GCP](docs/despliegue-gcp.md)
+- [Evidencia de GCP](docs/evidencia-gcp.md)

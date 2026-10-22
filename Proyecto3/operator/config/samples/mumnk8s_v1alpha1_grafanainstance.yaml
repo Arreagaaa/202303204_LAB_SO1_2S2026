@@ -1,0 +1,13 @@
+apiVersion: mumnk8s.sopes1.usac/v1alpha1
+kind: GrafanaInstance
+metadata:
+  name: grafanainstance-sample
+spec:
+  # Default values copied from <project_dir>/helm-charts/grafanainstance/values.yaml
+  adminSecretName: grafana-admin
+  image:
+    repository: zot.example/mumnk8s/grafana
+    tag: 11.2.0
+  replicaCount: 1
+  service:
+    port: 3000

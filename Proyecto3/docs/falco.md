@@ -16,12 +16,7 @@ La definicion versionada esta en `k8s/falco-values.yaml`. El archivo `k8s/08-fal
 ## Instalacion
 
 ```bash
-helm repo add falcosecurity https://falcosecurity.github.io/charts
-helm repo update
-helm upgrade --install falco falcosecurity/falco \
-  --namespace falco \
-  --create-namespace \
-  --values k8s/falco-values.yaml
+bash scripts/gcp/deploy-falco.sh 203-0-113-10.sslip.io
 ```
 
 Comprobar el despliegue:
@@ -36,13 +31,15 @@ kubectl get daemonset -n falco
 Ejecutar una lectura desde un pod de la aplicacion:
 
 ```bash
-kubectl exec -n mumnk8s deploy/api-rust -- cat /etc/shadow
+kubectl exec -n mumnk8s rabbitmq-0 -- sh -c \
+  'mkdir -p /app/secretos && echo prueba > /app/secretos/comprobacion && cat /app/secretos/comprobacion'
 ```
 
 Consultar los logs:
 
 ```bash
-kubectl logs -n falco daemonset/falco --since=2m | grep MUMNK8s
+kubectl logs -n falco daemonset/falco --since=2m | grep 'MUMNK8s intento de leer archivo sensible'
+kubectl exec -n mumnk8s rabbitmq-0 -- rm -f /app/secretos/comprobacion
 ```
 
-La evidencia debe mostrar el nombre de la regla, el proceso, el archivo y el contenedor involucrado.
+La prueba de GKE registro `command=cat`, `file=/app/secretos/comprobacion`, `container=rabbitmq`, `k8s_pod_name=rabbitmq-0` y `k8s_ns_name=mumnk8s`. La lectura de `/etc/shadow` desde la API Rust fue denegada por permisos, por lo que esa prueba no produjo una alerta.

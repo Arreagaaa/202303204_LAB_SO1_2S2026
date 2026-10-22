@@ -1,8 +1,19 @@
 # Operator Helm para Valkey y Grafana
 
-El contenedor usa la imagen `helm-operator` de Operator SDK, `watches.yaml` y dos charts. Cada Custom Resource activa una reconciliacion independiente. El proyecto incluye Dockerfile, watches, charts, CRDs, RBAC y Deployment del operador. En kind se comprobaron creacion, actualizacion y eliminacion de una instancia Valkey, ademas de la instalacion de Grafana. Falta repetir la prueba en GKE.
+El contenedor usa la imagen `helm-operator` de Operator SDK, `watches.yaml` y dos charts. Cada Custom Resource activa una reconciliacion independiente. El proyecto incluye Dockerfile, watches, charts, CRDs, RBAC y Deployment del operador. En kind se comprobaron creacion, actualizacion y eliminacion de una instancia Valkey, ademas de la instalacion de Grafana. En GKE ambos CR se reconciliaron y sus workloads estan listos.
 
-El esqueleto se armó con el runtime oficial y la estructura del ejemplo de Semana 11, pero no se generó con el comando `operator-sdk init/create api` en este equipo. Si se exige evidencia literal de esos comandos, habrá que regenerar el esqueleto y conservar los charts y CRDs de este repositorio.
+El 21 de octubre de 2026 se ejecuto Operator SDK v1.37.0 en un directorio temporal usando los charts existentes:
+
+```bash
+operator-sdk init --plugins helm --domain sopes1.usac --project-name mumnk8s-operator \
+  --group mumnk8s --version v1alpha1 --kind ValkeyInstance \
+  --helm-chart /ruta/absoluta/operator/helm-charts/valkeyinstance
+operator-sdk create api --group mumnk8s --version v1alpha1 \
+  --kind GrafanaInstance \
+  --helm-chart /ruta/absoluta/operator/helm-charts/grafanainstance
+```
+
+Se incorporaron `PROJECT`, `Makefile` y `config/` generados. Los charts, `watches.yaml` y Dockerfile funcionales se conservaron. El RBAC generado por SDK se revisa como referencia; el despliegue activo usa `../k8s/09-operator.yaml`.
 
 | Kind | Chart | Objetos derivados |
 |---|---|---|

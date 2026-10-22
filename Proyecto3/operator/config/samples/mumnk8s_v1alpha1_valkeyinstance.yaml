@@ -1,0 +1,12 @@
+apiVersion: mumnk8s.sopes1.usac/v1alpha1
+kind: ValkeyInstance
+metadata:
+  name: valkeyinstance-sample
+spec:
+  # Default values copied from <project_dir>/helm-charts/valkeyinstance/values.yaml
+  image:
+    repository: zot.example/mumnk8s/valkey
+    tag: "8"
+  maxMemory: 256mb
+  replicaCount: 1
+  storage: 1Gi
