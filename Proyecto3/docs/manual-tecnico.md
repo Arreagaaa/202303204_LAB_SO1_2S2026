@@ -2,7 +2,7 @@
 
 **Autor:** Christian Javier Rivas Arreaga, carné **202303204**. País asignado por último dígito (4): **CHN**.
 
-**Estado:** implementación de código y manifiestos preparada; compilación Go, validación Helm y pruebas de extremo a extremo en Compose y kind ejecutadas. Despliegue GKE y evidencias de carga en la nube pendientes.
+**Estado (21 de octubre de 2026):** implementación y despliegue en GKE verificados. El flujo completo, Zot, Gateway API, operador, carga con Locust, Grafana y alerta de Falco se documentan en [evidencia-gcp.md](evidencia-gcp.md).
 
 ## 1. Descripcion general
 
@@ -74,7 +74,7 @@ Valkey :6379
 Exporter de metricas :9091 -> Prometheus :9090 -> Grafana
 ```
 
-El destino previsto es GKE. Zot deberá alojarse en una VM N1 separada y servir como registry HTTPS; ese despliegue no se ha ejecutado todavía.
+El despliegue activo usa GKE Standard zonal y Zot HTTPS en una VM N1 separada. Véase [despliegue-gcp.md](despliegue-gcp.md) para recursos y comandos reproducibles.
 
 ## 3. Componentes
 
@@ -174,7 +174,7 @@ Grafana se administra mediante un chart Helm. El chart contiene:
 - Configuracion de datasource.
 - Provisioning de dashboards.
 
-El datasource integrado de Prometheus apunta a `prometheus:9090`. El exporter `metrics` lee las listas `reports:*` de Valkey y publica `/metrics` con máximos, mínimos, modas, totales por país y la última muestra de CHN. Prometheus conserva la serie de muestras para las gráficas temporales. El dashboard provisionado tiene doce paneles y usa CHN porque el carné termina en 4. Grafana local cargó el dashboard; falta revisar visualmente cada panel en GKE.
+El datasource integrado de Prometheus apunta a `prometheus:9090`. El exporter `metrics` lee las listas `reports:*` de Valkey y publica `/metrics` con máximos, mínimos, modas, totales por país y la última muestra de CHN. Prometheus conserva la serie de muestras para las gráficas temporales. El dashboard provisionado tiene doce paneles y usa CHN porque el carné termina en 4. En GKE se verificaron el dashboard provisionado y las series con datos reales; la inspección visual de los doce paneles durante la defensa sigue siendo recomendable.
 
 ## 4. Comunicacion gRPC
 
@@ -213,7 +213,7 @@ La API Rust tiene un HPA con:
 
 Todos los servicios principales tienen requests y limits. Esto permite que Kubernetes programe los pods correctamente y que el HPA pueda calcular el uso relativo de CPU.
 
-La comparacion de rendimiento debe ejecutarse con una y dos replicas de los deployments Go, manteniendo constantes los usuarios de Locust y la duracion de la prueba.
+En la carga de GKE, el HPA de Rust pasó de una a dos réplicas. No se hizo una comparación controlada de los deployments Go con una y dos réplicas; esa medición requeriría mantener iguales usuarios, duración y datos de entrada.
 
 ## 7. Operator Helm-based
 
@@ -226,7 +226,7 @@ Los CRDs se encuentran en `k8s/07-crds.yaml` y los recursos de ejemplo en `k8s/0
 
 El chart de Valkey crea un StatefulSet, un Service y un PVC. El chart de Grafana crea un Deployment, un Service y un ConfigMap con datasource y dashboard; lee la contraseña administrativa del Secret externo `grafana-admin`.
 
-La carpeta `operator/` contiene `Dockerfile`, `watches.yaml` y ambos charts. `k8s/09-operator.yaml` aporta el ServiceAccount, RBAC y Deployment. En kind se comprobó que el Helm Operator instala, actualiza y desinstala los recursos derivados del CR. La prueba debe repetirse en GKE.
+La carpeta `operator/` contiene `Dockerfile`, `watches.yaml` y ambos charts. `k8s/09-operator.yaml` aporta el ServiceAccount, RBAC y Deployment. En kind se comprobó instalación, actualización y eliminación de CRs; en GKE ambos CR se reconciliaron y los workloads quedaron listos. El scaffold oficial de Operator SDK v1.37.0 se generó con `init` y `create api` y sus archivos `PROJECT`, `Makefile` y `config/` están en `operator/`.
 
 ## 8. Seguridad con Falco
 
@@ -253,7 +253,7 @@ Regla personalizada preparada en `k8s/falco-values.yaml`:
   tags: [mumnk8s, filesystem]
 ```
 
-La captura de la alerta real se añadira despues de ejecutar la simulacion en GKE.
+La alerta real se produjo en GKE al leer `/app/secretos/comprobacion` desde `rabbitmq-0`; el registro incluyó proceso, archivo, contenedor y pod. El procedimiento reproducible está en [falco.md](falco.md).
 
 ## 9. HPA, Locust y evidencias
 
@@ -268,18 +268,18 @@ Cada prueba debe registrar:
 7. Estado de RabbitMQ.
 8. Reportes almacenados en Valkey.
 
-Las capturas deben incorporarse al manual final junto con una explicacion breve de los resultados.
+Los resultados medidos y los comandos de comprobación están en [evidencia-gcp.md](evidencia-gcp.md). Durante la revisión se pueden capturar las pantallas actuales de GKE, Grafana y Falco; este repositorio conserva evidencia textual reproducible.
 
 ## 10. Limitaciones conocidas
 
 - Zot requiere un dominio HTTPS real y confianza del certificado en los nodos.
 - Gateway API depende de la disponibilidad de la GatewayClass en GKE.
 - HPA requiere metricas disponibles mediante Metrics Server.
-- El dashboard está provisionado en Grafana local y las métricas muestran datos reales; verificar visualmente todos los paneles y su comportamiento en GKE.
+- El dashboard está provisionado en GKE y recibe métricas reales; se debe mantener el túnel `port-forward` abierto para verlo desde Windows.
 - El contrato `.proto` genera `report.pb.go` y `report_grpc.pb.go`; cliente y servidor usan protobuf estándar. El writer convierte la solicitud a JSON con nombres de campo del proto antes de publicarla en RabbitMQ.
-- Los deployments `go-ingest` y `go-writer` incluyen dos contenedores cada uno. Falta validar su comunicación bajo carga en GKE.
+- Los deployments `go-ingest` y `go-writer` incluyen dos contenedores cada uno; el flujo de GKE respondió sin fallos durante la carga medida.
 - La ruta `/dapr-202303204` es opcional y no forma parte del flujo base.
-- Las capturas de GCP, Zot, GKE, Locust, HPA y Falco deben generarse en el ambiente real de pruebas.
+- La infraestructura consume crédito mientras siga desplegada; el presupuesto configurado envía alertas pero no detiene recursos.
 
 ## 11. Pruebas realizadas y conclusiones provisionales
 
@@ -289,4 +289,4 @@ También se construyeron las ocho imágenes con Docker Engine en WSL Ubuntu. Doc
 
 En kind se instaló el Helm Operator. Creó Valkey y Grafana desde CRs separados; actualizar `spec.maxMemory` cambió el StatefulSet de Valkey y el dato CHN sobrevivió al reinicio. También se creó y eliminó una instancia Valkey de prueba. Envoy Gateway recibió reportes mediante la HTTPRoute. Metrics Server alimentó al HPA, que aumentó la API Rust de una a tres réplicas durante 90 segundos de Locust: 10873 solicitudes, 0 fallos, mediana de 480 ms y percentil 95 de 660 ms. La cola RabbitMQ se drenó tras la prueba. El Gateway local no obtuvo IP externa porque kind no proporciona un LoadBalancer; se comprobó por `port-forward`.
 
-Faltan la prueba de Zot, la GatewayClass de GKE y la comparación controlada de una y dos réplicas en GKE. Estas mediciones de kind describen solo el equipo local.
+El 21 de octubre se verificó Zot HTTPS en una VM N1, la descarga de imágenes y un artefacto OCI, GKE con un nodo N1 listo, Gateway API `Programmed=True` y la ruta pública con respuesta `202`. Locust realizó 6569 POST en 90 segundos con 50 usuarios, cero fallos, 74,58 solicitudes/s, mediana 240 ms y p95 810 ms. El HPA de Rust pasó de una a dos réplicas y la cola RabbitMQ quedó vacía. Prometheus devolvió 6574 reportes totales y 1314 de CHN; Grafana presentó el dashboard de doce paneles. Falco generó la alerta personalizada. Estos son resultados puntuales de GKE y no sustituyen una comparación controlada de réplicas Go ni la evaluación presencial. Los comandos y condiciones se detallan en [evidencia-gcp.md](evidencia-gcp.md).
