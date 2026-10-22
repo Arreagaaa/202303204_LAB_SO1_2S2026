@@ -284,7 +284,7 @@ Cada prueba debe registrar:
 7. Estado de RabbitMQ.
 8. Reportes almacenados en Valkey.
 
-Los resultados medidos y los comandos de comprobación están en [evidencia-gcp.md](evidencia-gcp.md). El repositorio conserva evidencia textual reproducible. Faltan las capturas de GKE, Grafana, Zot, Falco y las pruebas de carga que pide el enunciado. La comparación de Valkey se realizó localmente como se describe arriba; corresponde al evaluador aclarar si requiere una segunda demostración en GKE.
+Los resultados medidos y los comandos de comprobación están en [evidencia-gcp.md](evidencia-gcp.md). Las capturas de Zot, Grafana y Locust están en [evidencias/](evidencias/README.md). Faltan las capturas de GKE/pods, Gateway, HPA, Valkey y Falco; la del log de Falco debe incluirse en este manual antes de la entrega. La comparación de Valkey se realizó localmente como se describe arriba; corresponde al evaluador aclarar si requiere una segunda demostración en GKE.
 
 ## 10. Limitaciones conocidas
 
