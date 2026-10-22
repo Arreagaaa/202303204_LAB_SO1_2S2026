@@ -1,4 +1,4 @@
-# Estado de Proyecto 3 — 21 de octubre de 2026
+# Estado de Proyecto 3 al 21 de octubre de 2026
 
 **Estudiante:** Christian Javier Rivas Arreaga, carné 202303204. Ruta pública `/grpc-202303204`; país asignado **CHN**.
 
@@ -18,5 +18,7 @@ El sistema está desplegado en el proyecto GCP `ID_DEL_PROYECTO`. GKE tiene un n
 1. Entregar el repositorio privado y el manual Markdown en UEDI antes del plazo indicado por la cátedra. Confirmar el acceso de los revisores exigidos por el enunciado.
 2. Preparar la demostración y defensa oral. El funcionamiento observado no sustituye la evaluación del auxiliar.
 3. Revisar el consumo de GCP cada día y eliminar recursos cuando termine la evaluación. La alerta mensual de USD 25 no detiene los cargos.
+4. Guardar las capturas de funcionamiento que pide el enunciado. Los resultados escritos ya están en [evidencia-gcp.md](evidencia-gcp.md).
+5. Consultar al auxiliar si la comparación de Valkey con una y dos réplicas es obligatoria y, si lo es, acordar una prueba con datos replicados.
 
 Dapr era opcional y no se implementó. El enunciado menciona Gateway API explícitamente; se usó Gateway API aunque una tabla secundaria conserve la palabra Ingress.

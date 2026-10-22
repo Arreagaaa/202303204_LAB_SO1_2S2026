@@ -109,18 +109,27 @@
         "x": 0,
         "y": 5,
         "w": 12,
-        "h": 7
+        "h": 8
       },
       "targets": [
         {
           "refId": "A",
           "expr": "topk(5, military_country_warplanes_total)",
+          "legendFormat": "{{country}}",
           "instant": true
         }
       ],
       "options": {
         "orientation": "horizontal",
-        "displayMode": "gradient"
+        "displayMode": "gradient",
+        "namePlacement": "left",
+        "sizing": "manual",
+        "minVizHeight": 24,
+        "maxVizHeight": 28,
+        "textSize": {
+          "title": 14,
+          "value": 18
+        }
       }
     },
     {
@@ -135,18 +144,27 @@
         "x": 12,
         "y": 5,
         "w": 12,
-        "h": 7
+        "h": 8
       },
       "targets": [
         {
           "refId": "A",
           "expr": "topk(5, military_country_warships_total)",
+          "legendFormat": "{{country}}",
           "instant": true
         }
       ],
       "options": {
         "orientation": "horizontal",
-        "displayMode": "gradient"
+        "displayMode": "gradient",
+        "namePlacement": "left",
+        "sizing": "manual",
+        "minVizHeight": 24,
+        "maxVizHeight": 28,
+        "textSize": {
+          "title": 14,
+          "value": 18
+        }
       }
     },
     {
@@ -159,7 +177,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 12,
+        "y": 13,
         "w": 6,
         "h": 5
       },
@@ -181,7 +199,7 @@
       },
       "gridPos": {
         "x": 6,
-        "y": 12,
+        "y": 13,
         "w": 6,
         "h": 5
       },
@@ -199,7 +217,7 @@
       "title": "Pais asignado por carne 202303204",
       "gridPos": {
         "x": 12,
-        "y": 12,
+        "y": 13,
         "w": 6,
         "h": 5
       },
@@ -218,7 +236,7 @@
       },
       "gridPos": {
         "x": 18,
-        "y": 12,
+        "y": 13,
         "w": 6,
         "h": 5
       },
@@ -240,7 +258,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 17,
+        "y": 18,
         "w": 12,
         "h": 8
       },
@@ -262,7 +280,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 17,
+        "y": 18,
         "w": 12,
         "h": 8
       },

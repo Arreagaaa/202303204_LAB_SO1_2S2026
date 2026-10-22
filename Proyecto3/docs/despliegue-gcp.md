@@ -12,7 +12,9 @@ Las credenciales se guardan en WSL bajo `~/.config/mumnk8s/` con permisos restri
 
 ## Crear el ambiente desde cero
 
-Esta parte sirve para repetir la instalación en otro proyecto de GCP. Los comandos se ejecutan en WSL Ubuntu desde la carpeta `Proyecto3`. El proyecto necesita una cuenta de facturación activa y permisos para crear VMs, clústeres y reglas de red. Cada proyecto tiene su propio consumo, aunque dos proyectos compartan una misma cuenta de facturación.
+Esta guía permite repetir el despliegue en otro proyecto de GCP. Ejecuta los comandos en WSL Ubuntu desde la carpeta `Proyecto3`. El nuevo proyecto necesita una cuenta de facturación activa y permisos para crear máquinas virtuales, clústeres y reglas de red. Si ambos proyectos usan la misma cuenta de facturación, comparten sus créditos.
+
+Antes de abrir WSL, crea el proyecto desde el selector de proyectos de la consola de GCP con **Proyecto nuevo**. Anota el ID que asigna Google, selecciona ese proyecto y vincúlalo a la cuenta de facturación que usarán. En **Facturación > Presupuestos y alertas**, crea un presupuesto filtrado por el proyecto y agrega avisos por correo. Comprueba el proyecto seleccionado antes de ejecutar cualquier comando: crear recursos en el proyecto equivocado también consume crédito.
 
 Instalar y autenticar la CLI oficial de Google Cloud, y tener disponibles `gcloud`, `kubectl`, `gke-gcloud-auth-plugin`, Docker, Helm, ORAS, Python 3 y OpenSSL. [Google explica cómo instalar la CLI](https://cloud.google.com/sdk/docs/install) y el [plugin de autenticación de GKE](https://cloud.google.com/kubernetes-engine/docs/how-to/cluster-access-for-kubectl). Antes de crear recursos, comprobar la identidad y el proyecto:
 
@@ -122,7 +124,7 @@ bash scripts/gcp/deploy-falco.sh "$ZOT_HOST"
 kubectl get nodes
 kubectl get pods,deployments,statefulsets,hpa,pvc,gateway,httproute -n mumnk8s
 kubectl get valkeyinstances,grafanainstances -n mumnk8s
-oras repo ls 203-0-113-10.sslip.io
+oras repo ls "$ZOT_HOST"
 kubectl get daemonset,pods -n falco
 ```
 
@@ -136,8 +138,26 @@ Abrir `http://localhost:13000/d/mumnk8s-reports/m-u-m-n-k8s-reportes-militares?o
 
 Los resultados medidos de Gateway, Locust, HPA, Prometheus y Falco están en [evidencia-gcp.md](evidencia-gcp.md). Para repetir Falco, seguir [falco.md](falco.md).
 
+Guarda capturas del clúster y sus pods listos, la ruta Gateway, las imágenes en Zot, la ejecución de Locust y el dashboard de Grafana. Antes de la defensa, abre Grafana y verifica que los doce paneles muestren datos del proyecto que estás presentando.
+
 ## Costo y cierre
 
-La VM, el nodo GKE, los discos y el balanceador del Gateway consumen crédito mientras existan. Revisar la facturación del proyecto a diario. Cuando termine la evaluación, detener el consumo eliminando los recursos del proyecto con los comandos apropiados; conservar antes cualquier evidencia o dato que se necesite. La eliminación de clúster o VM destruye los datos almacenados en sus discos si se usa la configuración normal de borrado.
+La VM, el nodo GKE, los discos y el balanceador del Gateway consumen crédito mientras existan. Revisa la facturación del proyecto a diario. Antes de eliminar recursos, guarda las capturas y los datos que necesites: al borrar el clúster o la VM también puedes perder sus discos.
 
 El presupuesto configurado es **solo una alerta**, no un tope. La cuenta de facturación pertenece al compañero que creó el proyecto. Coordinar con él antes de borrar recursos o modificar facturación.
+
+Después de la calificación, guarda las capturas y confirma el proyecto activo. Estos comandos eliminan el clúster, la VM, la IP reservada y la regla HTTPS de **ese proyecto**. No los ejecutes mientras necesites mostrar el sistema:
+
+```bash
+gcloud config set project "$GCP_PROJECT_ID"
+gcloud container clusters delete mumnk8s-gke-c \
+  --zone "$GKE_ZONE" --project "$GCP_PROJECT_ID"
+gcloud compute instances delete mumnk8s-zot \
+  --zone "$ZOT_ZONE" --project "$GCP_PROJECT_ID"
+gcloud compute addresses delete mumnk8s-zot-ip \
+  --region "$GCP_REGION" --project "$GCP_PROJECT_ID"
+gcloud compute firewall-rules delete mumnk8s-zot-https \
+  --project "$GCP_PROJECT_ID"
+```
+
+Revisa después **Compute Engine > Discos** y **Red > Balanceo de cargas** en la consola. Si queda algún recurso, comprueba a qué proyecto pertenece antes de eliminarlo. El informe de facturación puede tardar en reflejar el cierre.

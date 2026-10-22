@@ -1,12 +1,12 @@
-# Guia de instalacion y despliegue
+# Guía de instalación y despliegue
 
 **Autor:** Christian Javier Rivas Arreaga · **Carné:** 202303204.
 
 ## 1. Objetivo
 
-Esta guia explica como preparar el ambiente, validar el codigo, construir las imagenes, publicarlas en Zot y desplegar los componentes en Kubernetes.
+Esta guía explica cómo preparar el ambiente, validar el código, construir las imágenes, publicarlas en Zot y desplegar los componentes en Kubernetes. Para repetir el despliegue que se probó en GCP, sigue [despliegue-gcp.md](despliegue-gcp.md): allí están el proyecto, la VM de Zot, GKE, las credenciales y los scripts utilizados.
 
-Los comandos de compilacion y validacion se ejecutan desde WSL2 cuando el equipo principal es Windows. Los comandos de GCP y Kubernetes pueden ejecutarse desde WSL2 o desde una distribucion Linux con acceso a las credenciales correspondientes.
+Los comandos de compilación y validación se ejecutan desde WSL2 cuando el equipo principal es Windows. Los comandos de GCP y Kubernetes también pueden ejecutarse desde Linux con acceso a las credenciales correspondientes.
 
 ## 2. Requisitos
 
@@ -15,9 +15,9 @@ Los comandos de compilacion y validacion se ejecutan desde WSL2 cuando el equipo
 Para la prueba local de extremo a extremo basta con Docker Engine y Docker Compose dentro de WSL2; los Dockerfiles compilan Go y Rust. Las otras herramientas se necesitan para desarrollo, validaciones individuales o despliegue:
 
 - Git
-- Go 1.22 o una version compatible
-- Rust y Cargo 1.99 (version fijada en el Dockerfile)
-- Docker Engine con el plugin Compose, o Docker Desktop con integracion para WSL2
+- Go 1.22 o una versión compatible
+- Rust y Cargo 1.99 (versión fijada en el Dockerfile)
+- Docker Engine con el plugin Compose, o Docker Desktop con integración para WSL2
 - kubectl
 - Helm
 - Locust, solo si se ejecuta fuera del contenedor de Compose
@@ -41,30 +41,30 @@ locust --version
 
 Para el despliegue final se necesita:
 
-1. Un proyecto de Google Cloud con facturacion habilitada.
-2. Un cluster GKE.
-3. Una VM N1 fuera del cluster para Zot.
+1. Un proyecto de Google Cloud con facturación habilitada.
+2. Un clúster GKE.
+3. Una VM N1 fuera del clúster para Zot.
 4. Un registry Zot accesible por HTTPS.
-5. Permisos para crear recursos en GKE y publicar imagenes.
+5. Permisos para crear recursos en GKE y publicar imágenes.
 6. Una GatewayClass compatible con Gateway API en GKE.
 
-Los nombres de proyecto, cluster, VM, registry y dominio deben definirse antes de ejecutar los comandos de despliegue.
+Define los nombres del proyecto, clúster, VM, registro y dominio antes de ejecutar los comandos de despliegue.
 
-## 3. Preparar el codigo
+## 3. Preparar el código
 
-Desde WSL2, ubicarse en la raiz del proyecto:
+Desde WSL2, entra en la raíz del proyecto:
 
 ```bash
 cd /mnt/d/2S2026/SOPES1/LAB/202303204_LAB_SO1_2S2026/Proyecto3
 ```
 
-Sincronizar los modulos de Go:
+Sincroniza los módulos de Go:
 
 ```bash
 go work sync
 ```
 
-Los archivos protobuf generados ya estan versionados. Si se modifica `proto/report.proto`, regenerarlos con `bash scripts/generate-proto.sh` antes de compilar.
+Los archivos protobuf generados ya están versionados. Si modificas `proto/report.proto`, vuelve a generarlos con `bash scripts/generate-proto.sh` antes de compilar.
 
 Compilar cada servicio:
 
@@ -78,7 +78,7 @@ go build ./metrics
 cargo build --manifest-path api-rust/Cargo.toml
 ```
 
-Ejecutar la validacion agrupada:
+Ejecuta la validación agrupada:
 
 ```bash
 bash scripts/test-wsl.sh
@@ -88,7 +88,7 @@ El script no crea recursos en GCP. Solo revisa y compila los componentes locales
 
 ## 4. Dependencias locales
 
-Desde la raiz de `Proyecto3`, iniciar todo el flujo local:
+Desde la raíz de `Proyecto3`, inicia todo el flujo local:
 
 ```bash
 docker compose -f compose.local.yaml up -d --build
@@ -101,7 +101,7 @@ docker compose -f compose.local.yaml ps
 curl http://localhost:8080/health
 ```
 
-La API queda en `http://localhost:8080`, RabbitMQ Management en `http://localhost:15672` y Grafana en `http://localhost:3300`. Usuario local: `mumnk8s` para RabbitMQ y `admin` para Grafana; ambas contrasenas locales son `x`. Esas credenciales son solo para la prueba local.
+La API queda en `http://localhost:8080`, RabbitMQ Management en `http://localhost:15672` y Grafana en `http://localhost:3300`. El usuario local de RabbitMQ es `mumnk8s` y el de Grafana es `admin`. Ambas contraseñas locales son `x` y solo se usan en esta prueba.
 
 Ejecutar la prueba de carga de un minuto y detener el ambiente:
 
@@ -131,7 +131,7 @@ Para recrear el clúster `mumnk8s-demo` desde cero, usar `--fresh`. Esta opción
 bash scripts/test-local-full.sh --fresh
 ```
 
-En WSL se probo un cluster `kind` llamado `mumnk8s-test`. Las herramientas `kind`, `kubectl` y `helm` se instalaron en `~/.local/bin`. Construir primero las ocho imagenes de aplicacion con las etiquetas `mumnk8s/<servicio>:local` y ejecutar:
+En WSL se probó un clúster `kind` llamado `mumnk8s-test`. Las herramientas `kind`, `kubectl` y `helm` se instalaron en `~/.local/bin`. Construye primero las ocho imágenes de aplicación con las etiquetas `mumnk8s/<servicio>:local` y ejecuta:
 
 ```bash
 kind create cluster --name mumnk8s-test --wait 120s
@@ -145,7 +145,7 @@ kubectl --context kind-mumnk8s-test apply -f k8s/local/custom-resources.yaml
 kubectl --context kind-mumnk8s-test get pods,pvc -n mumnk8s
 ```
 
-`scripts/load-kind-images.sh` carga las imagenes propias con los nombres esperados por los manifiestos, sin publicar en Zot. RabbitMQ, Valkey, Prometheus y Grafana se obtienen de sus repositorios publicos solo en esta prueba local. Esperar a que todos los pods esten `Ready`; el publicador y el consumer pueden reiniciarse mientras RabbitMQ termina de arrancar.
+`scripts/load-kind-images.sh` carga las imágenes propias con los nombres esperados por los manifiestos, sin publicar en Zot. RabbitMQ, Valkey, Prometheus y Grafana se obtienen de sus repositorios públicos solo en esta prueba local. Espera a que todos los pods estén `Ready`; el publicador y el consumidor pueden reiniciarse mientras RabbitMQ termina de arrancar.
 
 Para probar Gateway API en kind se uso Envoy Gateway. La clase `gke-l7-global-external-managed` del manifiesto principal es exclusiva de GKE; localmente se reemplaza solo al aplicar:
 
@@ -156,13 +156,13 @@ sed 's/gke-l7-global-external-managed/envoy-local/' k8s/04-gateway.yaml | kubect
 kubectl --context kind-mumnk8s-test get gateway,httproute -n mumnk8s
 ```
 
-La ruta puede probarse con `kubectl port-forward` al Service `envoy-mumnk8s-mumnk8s-gateway-...` en el namespace `envoy-gateway-system`. En kind, el Service LoadBalancer no obtiene IP externa; esto deja `Gateway Programmed=False` aunque la ruta HTTP funciona. Para HPA se instalo Metrics Server v0.8.0 y se anadio el argumento `--kubelet-insecure-tls`, limitado al cluster de prueba. Luego se aplico `k8s/03-hpa.yaml` y se comprobo `kubectl get hpa -n mumnk8s` durante Locust.
+La ruta puede probarse con `kubectl port-forward` al Service `envoy-mumnk8s-mumnk8s-gateway-...` en el namespace `envoy-gateway-system`. En kind, el Service LoadBalancer no obtiene IP externa; esto deja `Gateway Programmed=False` aunque la ruta HTTP funciona. Para el HPA se instaló Metrics Server v0.8.0 y se añadió el argumento `--kubelet-insecure-tls`, limitado al clúster de prueba. Después se aplicó `k8s/03-hpa.yaml` y se comprobó `kubectl get hpa -n mumnk8s` durante Locust.
 
-Eliminar el cluster cuando ya no se necesite con `kind delete cluster --name mumnk8s-test`; esa accion borra tambien sus datos locales.
+Elimina el clúster cuando ya no lo necesites con `kind delete cluster --name mumnk8s-test`; esa acción también borra sus datos locales.
 
-## 5. Construir las imagenes
+## 5. Construir las imágenes
 
-El contexto de Docker debe ser la carpeta `Proyecto3`, porque los Dockerfiles de Go necesitan acceder al modulo raiz y al contrato protobuf.
+El contexto de Docker debe ser la carpeta `Proyecto3`, porque los Dockerfiles de Go necesitan acceder al módulo raíz y al contrato protobuf.
 
 Definir el nombre del registry:
 
@@ -173,7 +173,7 @@ sed -i "s#zot.example#$ZOT#g" \
   operator/helm-charts/grafanainstance/values.yaml
 ```
 
-Construir las imagenes:
+Construye las imágenes:
 
 ```bash
 docker build -f api-rust/Dockerfile -t "$ZOT/mumnk8s/api-rust:dev" .
@@ -186,7 +186,7 @@ docker build -f metrics/Dockerfile -t "$ZOT/mumnk8s/metrics:dev" .
 docker build -f operator/Dockerfile -t "$ZOT/mumnk8s/operator:dev" operator
 ```
 
-Verificar que las imagenes existan:
+Comprueba que las imágenes existan:
 
 ```bash
 docker image ls "$ZOT/mumnk8s/*"
@@ -205,7 +205,7 @@ docker push "$ZOT/mumnk8s/metrics:dev"
 docker push "$ZOT/mumnk8s/operator:dev"
 ```
 
-Publicar tambien las imagenes de infraestructura, porque el cluster debe descargarlas desde Zot:
+Publica también las imágenes de infraestructura, porque el clúster debe descargarlas desde Zot:
 
 ```bash
 for image in \
@@ -223,7 +223,7 @@ done
 
 Antes de publicar, validar que el certificado HTTPS de Zot sea confiable para Docker y para el runtime de nodos de GKE.
 
-## 6. Configurar las imagenes de Kubernetes
+## 6. Configurar las imágenes de Kubernetes
 
 Los manifiestos contienen el dominio de ejemplo `zot.example`. Antes de aplicarlos, reemplazarlo por el dominio real:
 
@@ -233,7 +233,7 @@ sed -i "s#zot.example#$ZOT#g" \
   k8s/09-operator.yaml k8s/10-metrics.yaml
 ```
 
-Los `values.yaml` del operador se ajustan antes de construir su imagen porque se copian dentro de ella. Los manifiestos de produccion no incluyen contrasenas: `rabbitmq-credentials` y `grafana-admin` deben crearse en el namespace `mumnk8s` con claves reales, fuera de Git, antes de instalar los servicios. Los secretos en `k8s/local/` usan credenciales desechables exclusivamente para kind.
+Los `values.yaml` del operador se ajustan antes de construir su imagen porque se copian dentro de ella. Los manifiestos de producción no incluyen contraseñas: crea `rabbitmq-credentials` y `grafana-admin` en el namespace `mumnk8s` con claves reales fuera de Git, antes de instalar los servicios. Los secretos en `k8s/local/` usan credenciales desechables exclusivamente para kind.
 
 Revisar los cambios antes de continuar:
 
@@ -275,11 +275,11 @@ kubectl get hpa -n mumnk8s
 kubectl get gateway -n mumnk8s
 ```
 
-No continuar con la prueba de carga hasta que los pods principales esten `Ready` y el Gateway tenga una direccion asignada.
+No ejecutes la prueba de carga hasta que los pods principales estén `Ready` y el Gateway tenga una dirección asignada.
 
 ## 8. Instalar el Operator y sus recursos
 
-El procedimiento detallado esta en [operator/README.md](../operator/README.md). Aplicar los CRDs, el operador y luego los recursos:
+El procedimiento detallado está en [operator/README.md](../operator/README.md). Aplica los CRDs, el operador y luego los recursos:
 
 ```bash
 kubectl apply -f k8s/07-crds.yaml
@@ -305,7 +305,7 @@ Abrir `http://127.0.0.1:3000` y comprobar el dashboard `M.U.M.N.K8s - Reportes m
 
 ## 9. Instalar Falco
 
-La instalacion y la prueba de la regla personalizada estan documentadas en [falco.md](falco.md):
+La instalación y la prueba de la regla personalizada están documentadas en [falco.md](falco.md):
 
 ```bash
 helm repo add falcosecurity https://falcosecurity.github.io/charts
@@ -317,7 +317,7 @@ helm upgrade --install falco falcosecurity/falco \
 
 ## 10. Ejecutar Locust
 
-Obtener la direccion del Gateway:
+Obtén la dirección del Gateway:
 
 ```bash
 kubectl get gateway mumnk8s-gateway -n mumnk8s
@@ -336,9 +336,9 @@ Registrar para la evidencia:
 - Porcentaje de errores.
 - Latencia promedio y percentiles.
 - Replicas observadas durante la prueba.
-- Estado del HPA antes, durante y despues.
+- Estado del HPA antes, durante y después.
 
-## 11. Diagnostico rapido
+## 11. Diagnóstico rápido
 
 ### Pods que no inician
 
@@ -355,7 +355,7 @@ kubectl port-forward svc/api-rust 8080:80 -n mumnk8s
 curl -i http://127.0.0.1:8080/health
 ```
 
-### HPA sin metricas
+### HPA sin métricas
 
 ```bash
 kubectl get hpa -n mumnk8s

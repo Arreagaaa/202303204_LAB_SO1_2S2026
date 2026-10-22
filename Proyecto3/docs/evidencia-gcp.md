@@ -14,6 +14,8 @@ Verificado el 21 de octubre de 2026 (hora de Guatemala) en el proyecto `ID_DEL_P
 | Operator | CR `ValkeyInstance/reports` y `GrafanaInstance/dashboard` reconciliados, ambos workloads listos |
 | Observabilidad | Prometheus respondió `military_reports_total=6574` y `military_country_reports_total{country="CHN"}=1314` tras la carga. Dashboard Grafana `mumnk8s-reports` con 12 paneles provisionados |
 
+El 21 de octubre se abrió el dashboard de Grafana desde Windows mediante `port-forward`. Los doce paneles cargaron con datos de GKE. En esa revisión, el contador de CHN mostraba 2128 reportes, los máximos generales eran 50 aviones y 30 barcos, y ambas series temporales de CHN tenían muestras. Los dos paneles de países muestran ahora las siglas USA, ESP, RUS, CHN y GTM con sus cifras completas. Los valores cambian si entran más reportes.
+
 ## Carga y escalado
 
 Locust 2.31.8 ejecutó 50 usuarios durante 90 segundos contra el Gateway: **6569 POST, 0 fallos, 74,58 solicitudes/s**, media 353 ms, mediana 240 ms, p95 810 ms y p99 2900 ms. El HPA de Rust pasó de una a dos réplicas durante la carga y regresó a una después. La cola RabbitMQ terminó con cero mensajes pendientes y cero sin confirmar. Son valores de esa ejecución, no garantías de rendimiento futuras.
@@ -27,7 +29,7 @@ Se repitió Locust contra el mismo Gateway con 20 usuarios, rampa de 5 usuarios/
 | 1 | 2032 | 0 | 47,88 | 99 ms | 130 ms |
 | 2 | 2136 | 0 | 47,90 | 100 ms | 140 ms |
 
-Con esta carga el rendimiento fue parecido y dos réplicas no mejoraron el p95. Ambos deployments se restauraron a una réplica y quedaron listos; el HPA de Rust conserva `minReplicas=1`, `maxReplicas=3` y objetivo CPU 30 %.
+Con esta carga el rendimiento fue parecido y dos réplicas no mejoraron el p95. Ambos deployments se restauraron a una réplica y quedaron listos; el HPA de Rust conserva `minReplicas=1`, `maxReplicas=3` y objetivo CPU 30 %. La rúbrica también menciona comparar Valkey con una y dos réplicas. Esa prueba no se ha realizado y se consultará al auxiliar antes de cambiar la configuración de persistencia.
 
 ## Falco
 
@@ -48,4 +50,4 @@ Con el túnel abierto, Grafana está en `http://localhost:13000/d/mumnk8s-report
 
 ## Límites y entrega
 
-El presupuesto de USD 25 es una alerta, **no un límite de gasto**. VM, nodo GKE, discos y balanceador siguen consumiendo crédito mientras existan. El repositorio y este Markdown documentan el despliegue; faltan la entrega manual en UEDI y la defensa ante el auxiliar. Dapr es opcional y no se desplegó.
+El presupuesto de USD 25 es una alerta, **no un límite de gasto**. VM, nodo GKE, discos y balanceador siguen consumiendo crédito mientras existan. La consola de facturación mostraba USD 0.00 para este proyecto en la última consulta, pero los cargos pueden aparecer con retraso. Este archivo conserva mediciones y comandos; todavía hay que guardar las capturas exigidas por el enunciado, entregar en UEDI y defender el proyecto ante el auxiliar. Dapr es opcional y no se desplegó.

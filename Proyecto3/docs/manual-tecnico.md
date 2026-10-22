@@ -1,10 +1,10 @@
-# Manual tecnico
+# Manual técnico
 
 **Autor:** Christian Javier Rivas Arreaga, carné **202303204**. País asignado por último dígito (4): **CHN**.
 
 **Estado (21 de octubre de 2026):** implementación y despliegue en GKE verificados. El flujo completo, Zot, Gateway API, operador, carga con Locust, Grafana y alerta de Falco se documentan en [evidencia-gcp.md](evidencia-gcp.md).
 
-## 1. Descripcion general
+## 1. Descripción general
 
 M.U.M.N.K8s es un sistema distribuido para recibir, transportar, procesar y almacenar reportes militares simulados. El proyecto usa servicios independientes para representar un flujo de eventos en tiempo real dentro de Kubernetes.
 
@@ -26,7 +26,7 @@ Los rangos aplicados por la API son:
 | `country` | `USA`, `RUS`, `CHN`, `ESP` o `GTM` |
 | `warplanes_in_air` | Entero entre 0 y 50 |
 | `warships_in_water` | Entero entre 0 y 30 |
-| `timestamp` | Fecha valida en formato RFC3339 |
+| `timestamp` | Fecha válida en formato RFC3339 |
 
 ## 2. Arquitectura
 
@@ -71,7 +71,7 @@ Consumer Go
 Valkey :6379
       |
       v
-Exporter de metricas :9091 -> Prometheus :9090 -> Grafana
+Exportador de métricas :9091 -> Prometheus :9090 -> Grafana
 ```
 
 El despliegue activo usa GKE Standard zonal y Zot HTTPS en una VM N1 separada. Véase [despliegue-gcp.md](despliegue-gcp.md) para recursos y comandos reproducibles.
@@ -80,11 +80,11 @@ El despliegue activo usa GKE Standard zonal y Zot HTTPS en una VM N1 separada. V
 
 ### 3.1. API Rust
 
-Ubicacion: `api-rust/`.
+Ubicación: `api-rust/`.
 
 Responsabilidades:
 
-- Exponer el endpoint publico.
+- Exponer el endpoint público.
 - Validar la estructura del reporte.
 - Reenviar el reporte al servicio Go.
 - Responder con `202 Accepted` cuando el servicio interno acepta el reporte.
@@ -96,11 +96,11 @@ Endpoint:
 POST /grpc-202303204
 ```
 
-Aunque el nombre de la ruta identifica el flujo gRPC solicitado por el enunciado, la entrada publica es HTTP REST. El intercambio gRPC ocurre entre los servicios Go.
+Aunque el nombre de la ruta identifica el flujo gRPC solicitado por el enunciado, la entrada pública es HTTP REST. El intercambio gRPC ocurre entre los servicios Go.
 
 ### 3.2. Go Ingest
 
-Ubicacion: `go-ingest/`.
+Ubicación: `go-ingest/`.
 
 Responsabilidades:
 
@@ -117,27 +117,27 @@ POST /reports
 
 ### 3.3. Go Writer
 
-Ubicacion: `go-writer/`.
+Ubicación: `go-writer/`.
 
 Responsabilidades:
 
 - Implementar el servidor gRPC.
 - Recibir `SendReport` en el contenedor servidor gRPC.
 - Serializar la solicitud y enviarla al contenedor publicador del mismo pod.
-- El contenedor `go-writer-publisher` declara la cola durable `military-reports`, publica mensajes persistentes y espera confirmacion de RabbitMQ.
+- El contenedor `go-writer-publisher` declara la cola durable `military-reports`, publica mensajes persistentes y espera confirmación de RabbitMQ.
 - Devolver confirmacion al cliente gRPC tras recibirla del broker.
 
 ### 3.4. Consumer
 
-Ubicacion: `consumer/`.
+Ubicación: `consumer/`.
 
 Responsabilidades:
 
 - Consumir mensajes de `military-reports`.
 - Deserializar cada reporte.
 - Guardarlo en Valkey mediante RESP.
-- Confirmar el mensaje solo despues de guardarlo correctamente.
-- Rechazar o reencolar mensajes segun el tipo de error.
+- Confirmar el mensaje solo después de guardarlo correctamente.
+- Rechazar o reencolar mensajes según el tipo de error.
 
 Las claves se generan como:
 
@@ -157,7 +157,7 @@ RabbitMQ es el broker obligatorio del flujo principal. Se prepara como StatefulS
 
 ### 3.6. Valkey
 
-Valkey se despliega como StatefulSet con PVC. La configuracion incluye:
+Valkey se despliega como StatefulSet con PVC. La configuración incluye:
 
 - AOF para persistencia.
 - Limite de memoria de 256 MB.
@@ -174,7 +174,7 @@ Grafana se administra mediante un chart Helm. El chart contiene:
 - Configuracion de datasource.
 - Provisioning de dashboards.
 
-El datasource integrado de Prometheus apunta a `prometheus:9090`. El exporter `metrics` lee las listas `reports:*` de Valkey y publica `/metrics` con máximos, mínimos, modas, totales por país y la última muestra de CHN. Prometheus conserva la serie de muestras para las gráficas temporales. El dashboard provisionado tiene doce paneles y usa CHN porque el carné termina en 4. En GKE se verificaron el dashboard provisionado y las series con datos reales; la inspección visual de los doce paneles durante la defensa sigue siendo recomendable.
+El origen de datos de Prometheus apunta a `prometheus:9090`. El exportador `metrics` lee las listas `reports:*` de Valkey y publica `/metrics` con máximos, mínimos, modas, totales por país y la última muestra de CHN. Prometheus conserva las muestras para las gráficas temporales. El dashboard tiene doce paneles y usa CHN porque el carné termina en 4. En GKE se abrieron los doce paneles con datos reales; antes de la defensa conviene comprobarlos de nuevo.
 
 ## 4. Comunicacion gRPC
 
@@ -186,9 +186,9 @@ El metodo principal es:
 SendReport(WarReportRequest) returns (WarReportResponse)
 ```
 
-La solicitud incluye pais, aviones, barcos y timestamp. La respuesta informa si el mensaje fue publicado.
+La solicitud incluye país, aviones, barcos y timestamp. La respuesta informa si el mensaje fue publicado.
 
-El servicio gRPC no se expone al exterior del cluster. Solo se publica el endpoint de Rust mediante Gateway API.
+El servicio gRPC no se expone al exterior del clúster. Solo se publica el endpoint de Rust mediante Gateway API.
 
 ## 5. Gateway API
 
@@ -198,7 +198,7 @@ El recurso `Gateway` utiliza la clase:
 gke-l7-global-external-managed
 ```
 
-El recurso `HTTPRoute` enruta el prefijo `/grpc-202303204` al Service `api-rust` en el puerto 80. Esta configuracion reemplaza el uso de un Ingress Controller, tal como solicita el enunciado.
+El recurso `HTTPRoute` enruta el prefijo `/grpc-202303204` al Service `api-rust` en el puerto 80. Esta configuración reemplaza el uso de un Ingress Controller, tal como solicita el enunciado.
 
 ## 6. Escalamiento y recursos
 
@@ -206,8 +206,8 @@ La API Rust tiene un HPA con:
 
 | Parametro | Valor |
 |---|---:|
-| Minimo de replicas | 1 |
-| Maximo de replicas | 3 |
+| Mínimo de réplicas | 1 |
+| Máximo de réplicas | 3 |
 | Recurso medido | CPU |
 | Objetivo | 30% |
 
@@ -235,7 +235,7 @@ La regla personalizada detecta intentos de lectura de:
 - `/etc/shadow`.
 - `/app/secretos`.
 
-La regla se limita a contenedores cuyas imagenes pertenecen al proyecto. El procedimiento de instalacion y la evidencia esperada estan en `docs/falco.md`.
+La regla se limita a contenedores cuyas imágenes pertenecen al proyecto. El procedimiento de instalación y la evidencia esperada están en `docs/falco.md`.
 
 Regla personalizada preparada en `k8s/falco-values.yaml`:
 
@@ -263,18 +263,18 @@ Cada prueba debe registrar:
 2. Solicitudes por segundo.
 3. Porcentaje de errores.
 4. Latencia promedio y percentiles.
-5. Numero de replicas antes y despues.
+5. Número de réplicas antes y después.
 6. Uso de CPU.
 7. Estado de RabbitMQ.
 8. Reportes almacenados en Valkey.
 
-Los resultados medidos y los comandos de comprobación están en [evidencia-gcp.md](evidencia-gcp.md). Durante la revisión se pueden capturar las pantallas actuales de GKE, Grafana y Falco; este repositorio conserva evidencia textual reproducible.
+Los resultados medidos y los comandos de comprobación están en [evidencia-gcp.md](evidencia-gcp.md). El repositorio conserva evidencia textual reproducible. Faltan las capturas de GKE, Grafana, Zot y las pruebas de carga que pide el enunciado. La rúbrica también menciona comparar Valkey con una y dos réplicas; esa prueba sigue pendiente de aclaración con el auxiliar.
 
 ## 10. Limitaciones conocidas
 
 - Zot requiere un dominio HTTPS real y confianza del certificado en los nodos.
 - Gateway API depende de la disponibilidad de la GatewayClass en GKE.
-- HPA requiere metricas disponibles mediante Metrics Server.
+- HPA requiere métricas disponibles mediante Metrics Server.
 - El dashboard está provisionado en GKE y recibe métricas reales; se debe mantener el túnel `port-forward` abierto para verlo desde Windows.
 - El contrato `.proto` genera `report.pb.go` y `report_grpc.pb.go`; cliente y servidor usan protobuf estándar. El writer convierte la solicitud a JSON con nombres de campo del proto antes de publicarla en RabbitMQ.
 - Los deployments `go-ingest` y `go-writer` incluyen dos contenedores cada uno; el flujo de GKE respondió sin fallos durante la carga medida.
