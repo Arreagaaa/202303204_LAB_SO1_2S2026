@@ -9,6 +9,7 @@ Falco observa llamadas al sistema dentro de los contenedores. Aquí detecta la l
 La regla `MUMNK8s sensitive file read` genera una alerta cuando un contenedor del proyecto intenta leer:
 
 - `/etc/shadow`.
+- `/proc/1/environ` (variables de entorno del proceso principal).
 - Cualquier ruta que empiece con `/app/secretos`.
 
 La definición versionada está en `k8s/falco-values.yaml`. El archivo `k8s/08-falco-rule.yaml` conserva la misma regla como ConfigMap de referencia.
@@ -28,18 +29,16 @@ kubectl get daemonset -n falco
 
 ## Simulación
 
-Ejecutar una lectura desde un pod de la aplicación:
+Ejecutar una lectura desde el pod de la API Rust, sin imprimir el contenido sensible:
 
 ```bash
-kubectl exec -n mumnk8s rabbitmq-0 -- sh -c \
-  'mkdir -p /app/secretos && echo prueba > /app/secretos/comprobacion && cat /app/secretos/comprobacion'
+kubectl exec -n mumnk8s deploy/api-rust -- sh -c 'cat /proc/1/environ >/dev/null'
 ```
 
 Consultar los logs:
 
 ```bash
 kubectl logs -n falco daemonset/falco --since=2m | grep 'MUMNK8s intento de leer archivo sensible'
-kubectl exec -n mumnk8s rabbitmq-0 -- rm -f /app/secretos/comprobacion
 ```
 
-La prueba de GKE registró `command=cat`, `file=/app/secretos/comprobacion`, `container=rabbitmq`, `k8s_pod_name=rabbitmq-0` y `k8s_ns_name=mumnk8s`. La lectura de `/etc/shadow` desde la API Rust fue denegada por permisos, por lo que esa prueba no produjo una alerta.
+El 22 de octubre de 2026, tras actualizar Falco a la revisión Helm 2, GKE registró `command=cat /proc/1/environ`, `file=/proc/1/environ`, `container=api-rust`, `k8s_pod_name=api-rust-5fd9b8d4b8-5ljtb` y `k8s_ns_name=mumnk8s`. La regla y el DaemonSet quedaron listos. La prueba previa desde RabbitMQ permanece como antecedente, pero esta ejecución cumple la condición de usar un pod Rust o Go. Falta únicamente la captura que incorporará el estudiante al manual antes de entregar.

@@ -1,4 +1,4 @@
-# Estado de Proyecto 3 al 21 de octubre de 2026
+# Estado de Proyecto 3 al 22 de octubre de 2026
 
 **Estudiante:** Christian Javier Rivas Arreaga, carné 202303204. Ruta pública `/grpc-202303204`; país asignado **CHN**.
 
@@ -9,7 +9,8 @@ El sistema está desplegado en el proyecto GCP `ID_DEL_PROYECTO`. GKE tiene un n
 - Locust en GKE: 50 usuarios, 90 segundos, 6569 POST, cero fallos; HPA de Rust pasó de una a dos réplicas.
 - Comparación corta de servicios Go: con 20 usuarios y 45 segundos, una y dos réplicas dieron ~47,9 solicitudes/s sin fallos; dos réplicas no mejoraron el p95. Se restauró una réplica por deployment.
 - Prometheus registró 6574 reportes totales y 1314 del país CHN tras la carga. Grafana tiene doce paneles provisionados.
-- Falco generó una alerta real al leer un archivo bajo `/app/secretos` desde un pod de la aplicación.
+- Falco generó una alerta real desde `api-rust` al leer `/proc/1/environ` sin mostrar su contenido (22 de octubre).
+- La comparación de Valkey con primario solo y primario más réplica de datos se ejecutó localmente con 1000 escrituras por escenario; el PVC activo de GKE no se modificó.
 - Operator SDK v1.37.0 generó `PROJECT`, `Makefile` y `config/` para ambos CR mediante `init` y `create api`; el runtime desplegado conserva los charts y manifiestos comprobados.
 - La validación local anterior incluyó Go, Rust, Helm, Docker Compose, kind, reconciliación y persistencia del operador. Los resultados locales y de GKE deben interpretarse por separado.
 
@@ -19,6 +20,6 @@ El sistema está desplegado en el proyecto GCP `ID_DEL_PROYECTO`. GKE tiene un n
 2. Preparar la demostración y defensa oral. El funcionamiento observado no sustituye la evaluación del auxiliar.
 3. Revisar el consumo de GCP cada día y eliminar recursos cuando termine la evaluación. La alerta mensual de USD 25 no detiene los cargos.
 4. Guardar las capturas de funcionamiento que pide el enunciado. Los resultados escritos ya están en [evidencia-gcp.md](evidencia-gcp.md).
-5. Consultar al auxiliar si la comparación de Valkey con una y dos réplicas es obligatoria y, si lo es, acordar una prueba con datos replicados.
+5. Consultar al auxiliar si la comparación local de Valkey ya documentada satisface el criterio o si exige además una demostración en GKE. La prueba cloud tendría que ser aislada del Valkey activo.
 
 Dapr era opcional y no se implementó. El enunciado menciona Gateway API explícitamente; se usó Gateway API aunque una tabla secundaria conserve la palabra Ingress.

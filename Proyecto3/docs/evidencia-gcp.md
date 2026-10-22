@@ -33,9 +33,11 @@ Con esta carga el rendimiento fue parecido y dos réplicas no mejoraron el p95. 
 
 ## Falco
 
-Falco 0.45.1 quedó en un DaemonSet listo con driver modern eBPF. Su imagen, `falcoctl` y el plugin OCI de contenedores con su firma se sirvieron desde Zot. Una lectura de `/app/secretos/comprobacion` dentro de `rabbitmq-0` produjo la alerta personalizada `MUMNK8s intento de leer archivo sensible`, con proceso `cat`, archivo, contenedor, pod y namespace en el registro. El archivo de prueba fue eliminado. El procedimiento para repetirla está en [falco.md](falco.md).
+Falco 0.45.1 quedó en un DaemonSet listo con driver modern eBPF. Su imagen, `falcoctl` y el plugin OCI de contenedores con su firma se sirvieron desde Zot. Una lectura de `/app/secretos/comprobacion` dentro de `rabbitmq-0` produjo la alerta personalizada inicial. El 22 de octubre se actualizó la regla para incluir `/proc/1/environ` y se comprobó desde `api-rust`; Falco registró `command=cat /proc/1/environ`, `file=/proc/1/environ`, `container=api-rust`, `k8s_pod_name=api-rust-5fd9b8d4b8-5ljtb` y `k8s_ns_name=mumnk8s`. El comando descartó el contenido del archivo. El procedimiento para repetirla está en [falco.md](falco.md).
 
 ## Acceso durante la revisión
+
+El 22 de octubre se repitió una comprobación mínima del flujo público: un POST CHN al Gateway respondió `202 Accepted` y `LLEN reports:CHN` en Valkey pasó de 2128 a 2129. Esta comprobación valida la ruta completa en ese momento sin ejecutar otra carga sostenida.
 
 ```bash
 export PATH="$HOME/google-cloud-sdk/bin:$HOME/.local/bin:$PATH"

@@ -58,7 +58,7 @@ El flujo completo funciona en GKE: Zot sirve las imágenes, Gateway enruta a la 
 | Operator Helm, RBAC y watches | Funcionando en GKE; scaffold generado con Operator SDK |
 | Exporter, Prometheus y dashboard de 12 paneles | Funcionando con datos reales en GKE |
 | CRDs y Custom Resources | Preparados |
-| Regla personalizada de Falco | Alerta comprobada en GKE |
+| Regla personalizada de Falco | Alerta comprobada desde `api-rust` en GKE |
 | Publicación de imágenes en Zot | Comprobada en HTTPS, incluido artefacto OCI |
 | Despliegue final en GKE | Activo y validado |
 | Ruta opcional con Dapr | No implementada |

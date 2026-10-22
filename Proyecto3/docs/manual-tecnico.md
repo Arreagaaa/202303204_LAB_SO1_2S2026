@@ -2,7 +2,7 @@
 
 **Autor:** Christian Javier Rivas Arreaga, carné **202303204**. País asignado por último dígito (4): **CHN**.
 
-**Estado (21 de octubre de 2026):** implementación y despliegue en GKE verificados. El flujo completo, Zot, Gateway API, operador, carga con Locust, Grafana y alerta de Falco se documentan en [evidencia-gcp.md](evidencia-gcp.md).
+**Estado (22 de octubre de 2026):** implementación y despliegue en GKE verificados. El flujo completo, Zot, Gateway API, operador, carga con Locust, Grafana y alerta de Falco se documentan en [evidencia-gcp.md](evidencia-gcp.md).
 
 ## 1. Descripción general
 
@@ -215,6 +215,17 @@ Todos los servicios principales tienen requests y limits. Esto permite que Kuber
 
 En la carga principal de GKE, el HPA de Rust pasó de una a dos réplicas. También se compararon los deployments Go con una y dos réplicas usando 20 usuarios, rampa de 5 usuarios/s y 45 segundos por ejecución. La tasa fue 47,88 frente a 47,90 solicitudes/s, ambas sin fallos; el p95 fue 130 frente a 140 ms. Dos réplicas no mejoraron esa latencia en la carga corta. Los datos acumulados no se reiniciaron, así que el resultado no permite inferir una ventaja general. Detalles en [evidencia-gcp.md](evidencia-gcp.md).
 
+### Comparación local de Valkey: una instancia y una réplica de datos
+
+El 22 de octubre se ejecutó `python3 scripts/compare-valkey-local.py` con Docker local e imagen `valkey/valkey:8`. Se comparó un primario solo contra un primario y una réplica conectada con `--replicaof`; no se modificó la instancia activa de GKE. En cada escenario se realizaron 1000 `RPUSH` secuenciales de reportes CHN, abriendo una conexión por comando. Tras medir el segundo lote se ejecutó `WAIT 1 5000` para confirmar la replicación, fuera del tiempo medido. Se comprobaron 1000 elementos en el primario y en la réplica.
+
+| Escenario local | Escrituras | Media por escritura | p95 | Escrituras/s |
+|---|---:|---:|---:|---:|
+| Un primario | 1000 | 1,004 ms | 1,428 ms | 996,28 |
+| Primario + réplica | 1000 | 0,649 ms | 0,897 ms | 1541,89 |
+
+La segunda ejecución mostró menor latencia, pero son dos muestras cortas y secuenciales sin repetición estadística: no prueban que una réplica mejore el rendimiento. Las cifras incluyen apertura de conexión en cada operación y no representan capacidad máxima ni disponibilidad tras fallo. La topología actual del chart tiene `replicaCount: 1`; elevar ese valor a 2 sin `replicaof` produciría dos instancias independientes detrás del mismo Service, por lo que **no** se hizo ese cambio en GKE. La rúbrica no especifica que esta comparación deba ocurrir en GKE; si el evaluador lo exige, se debe preparar una prueba aislada que no toque el PVC ni el Service activos.
+
 ## 7. Operator Helm-based
 
 El Operator contempla dos recursos personalizados:
@@ -233,6 +244,7 @@ La carpeta `operator/` contiene `Dockerfile`, `watches.yaml` y ambos charts. `k8
 La regla personalizada detecta intentos de lectura de:
 
 - `/etc/shadow`.
+- `/proc/1/environ`.
 - `/app/secretos`.
 
 La regla se limita a contenedores cuyas imágenes pertenecen al proyecto. El procedimiento de instalación y la evidencia esperada están en `docs/falco.md`.
@@ -244,7 +256,7 @@ Regla personalizada preparada en `k8s/falco-values.yaml`:
   desc: Detecta lectura de archivos sensibles en pods del proyecto
   condition: >
     open_read and container and
-    (fd.name=/etc/shadow or fd.name startswith /app/secretos) and
+    (fd.name=/etc/shadow or fd.name=/proc/1/environ or fd.name startswith /app/secretos) and
     (container.image.repository contains "mumnk8s")
   output: >
     MUMNK8s intento de leer archivo sensible
@@ -253,7 +265,11 @@ Regla personalizada preparada en `k8s/falco-values.yaml`:
   tags: [mumnk8s, filesystem]
 ```
 
-La alerta real se produjo en GKE al leer `/app/secretos/comprobacion` desde `rabbitmq-0`; el registro incluyó proceso, archivo, contenedor y pod. El procedimiento reproducible está en [falco.md](falco.md).
+El 22 de octubre se produjo en GKE una alerta desde el pod `api-rust` al ejecutar `cat /proc/1/environ >/dev/null`. Falco registró el comando, archivo, contenedor, pod y namespace; el contenido sensible no se imprimió. El procedimiento reproducible está en [falco.md](falco.md). La captura del log queda a cargo del estudiante antes de la entrega.
+
+```text
+17:00:47.577281331: Warning MUMNK8s intento de leer archivo sensible (user=<NA> command=cat /proc/1/environ file=/proc/1/environ container=api-rust) container_id=db6a71364757 container_name=api-rust container_image_repository=203-0-113-10.sslip.io/mumnk8s/api-rust container_image_tag=dev k8s_pod_name=api-rust-5fd9b8d4b8-5ljtb k8s_ns_name=mumnk8s
+```
 
 ## 9. HPA, Locust y evidencias
 
@@ -268,7 +284,7 @@ Cada prueba debe registrar:
 7. Estado de RabbitMQ.
 8. Reportes almacenados en Valkey.
 
-Los resultados medidos y los comandos de comprobación están en [evidencia-gcp.md](evidencia-gcp.md). El repositorio conserva evidencia textual reproducible. Faltan las capturas de GKE, Grafana, Zot y las pruebas de carga que pide el enunciado. La rúbrica también menciona comparar Valkey con una y dos réplicas; esa prueba sigue pendiente de aclaración con el auxiliar.
+Los resultados medidos y los comandos de comprobación están en [evidencia-gcp.md](evidencia-gcp.md). El repositorio conserva evidencia textual reproducible. Faltan las capturas de GKE, Grafana, Zot, Falco y las pruebas de carga que pide el enunciado. La comparación de Valkey se realizó localmente como se describe arriba; corresponde al evaluador aclarar si requiere una segunda demostración en GKE.
 
 ## 10. Limitaciones conocidas
 

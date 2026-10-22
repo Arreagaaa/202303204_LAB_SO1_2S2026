@@ -9,7 +9,7 @@ data:
       desc: Detecta la lectura de un archivo sensible dentro de los servicios del proyecto
       condition: >
         open_read and container and
-        (fd.name=/etc/shadow or fd.name startswith /app/secretos) and
+        (fd.name=/etc/shadow or fd.name=/proc/1/environ or fd.name startswith /app/secretos) and
         (container.image.repository contains "mumnk8s")
       output: >
         MUMNK8s intento de leer archivo sensible
