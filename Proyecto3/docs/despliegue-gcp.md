@@ -12,7 +12,7 @@ Las credenciales se guardan en WSL bajo `~/.config/mumnk8s/` con permisos restri
 
 ## Crear el ambiente desde cero
 
-Esta guía permite repetir el despliegue en otro proyecto de GCP. Ejecuta los comandos en WSL Ubuntu desde la carpeta `Proyecto3`. El nuevo proyecto necesita una cuenta de facturación activa y permisos para crear máquinas virtuales, clústeres y reglas de red. Si ambos proyectos usan la misma cuenta de facturación, comparten sus créditos.
+Esta guía recoge los pasos usados para desplegar el sistema y permite repetirlos en otro proyecto de GCP. Los comandos se ejecutan en WSL Ubuntu desde la carpeta `Proyecto3`. El proyecto necesita una cuenta de facturación activa y permisos para crear máquinas virtuales, clústeres y reglas de red. Varios proyectos vinculados a una misma cuenta de facturación comparten sus créditos.
 
 Antes de abrir WSL, crea el proyecto desde el selector de proyectos de la consola de GCP con **Proyecto nuevo**. Anota el ID que asigna Google, selecciona ese proyecto y vincúlalo a la cuenta de facturación que usarán. En **Facturación > Presupuestos y alertas**, crea un presupuesto filtrado por el proyecto y agrega avisos por correo. Comprueba el proyecto seleccionado antes de ejecutar cualquier comando: crear recursos en el proyecto equivocado también consume crédito.
 
@@ -44,6 +44,8 @@ gcloud compute firewall-rules create mumnk8s-zot-https \
   --network=default --allow=tcp:80,tcp:443 --source-ranges=0.0.0.0/0 \
   --target-tags=mumnk8s-zot --project "$GCP_PROJECT_ID"
 ```
+
+El nombre de Zot sale de la IP reservada. En esta instalación, `203.0.113.10` se convirtió en `203-0-113-10.sslip.io`. El servicio DNS de `sslip.io` devuelve esa misma IP cuando se consulta el nombre. No se compró un dominio ni se creó una zona de Cloud DNS. Caddy recibe las conexiones por HTTPS en la VM y las envía a Zot, que escucha en `127.0.0.1:5000`. Caddy obtiene y renueva el certificado TLS. El nombre depende de `sslip.io`, mientras que la VM, la IP, el disco y el tráfico pertenecen a la infraestructura de GCP.
 
 La red `default` de GCP puede incluir una regla que permita SSH desde cualquier IP. Revisarla y limitarla según la red desde la que se administrará la VM. La VM de Zot no necesita una cuenta de servicio de Google:
 
@@ -90,7 +92,7 @@ kubectl get nodes
 kubectl get gatewayclass
 ```
 
-Si GCP responde que no hay capacidad N1 en la zona, elegir otra antes de seguir y actualizar `GKE_ZONE`. Confirmar que no quedó un clúster incompleto con `gcloud container clusters list`. A partir de aquí, publicar imágenes, desplegar la aplicación y Falco con los comandos de las secciones siguientes. En el proyecto del compañero se debe establecer su propio `GCP_PROJECT_ID`, IP y host de Zot. Los scripts de publicación y Falco reciben el host como argumento; el de GKE lee `GCP_PROJECT_ID` del entorno.
+Si GCP responde que no hay capacidad N1 en la zona, elegir otra antes de seguir y actualizar `GKE_ZONE`. Confirmar que no quedó un clúster incompleto con `gcloud container clusters list`. A partir de aquí, publicar imágenes, desplegar la aplicación y Falco con los comandos de las secciones siguientes. Al repetir el proceso en otro proyecto, establecer el `GCP_PROJECT_ID`, la IP y el host de Zot correspondientes. Los scripts de publicación y Falco reciben el host como argumento; el de GKE lee `GCP_PROJECT_ID` del entorno.
 
 ## Publicar de nuevo
 
@@ -138,13 +140,13 @@ Abrir `http://localhost:13000/d/mumnk8s-reports/m-u-m-n-k8s-reportes-militares?o
 
 Los resultados medidos de Gateway, Locust, HPA, Prometheus y Falco están en [evidencia-gcp.md](evidencia-gcp.md). Para repetir Falco, seguir [falco.md](falco.md).
 
-Guarda capturas del clúster y sus pods listos, la ruta Gateway, las imágenes en Zot, la ejecución de Locust y el dashboard de Grafana. Antes de la defensa, abre Grafana y verifica que los doce paneles muestren datos del proyecto que estás presentando.
+Para la entrega hacen falta capturas del clúster y sus pods listos, la ruta Gateway, las imágenes en Zot, la ejecución de Locust y el dashboard de Grafana. Antes de la defensa se deben comprobar los doce paneles con datos del proyecto.
 
 ## Costo y cierre
 
 La VM, el nodo GKE, los discos y el balanceador del Gateway consumen crédito mientras existan. Revisa la facturación del proyecto a diario. Antes de eliminar recursos, guarda las capturas y los datos que necesites: al borrar el clúster o la VM también puedes perder sus discos.
 
-El presupuesto configurado es **solo una alerta**, no un tope. La cuenta de facturación pertenece al compañero que creó el proyecto. Coordinar con él antes de borrar recursos o modificar facturación.
+El presupuesto configurado es **solo una alerta**, no un tope. La cuenta de facturación está administrada por su propietario; cualquier cambio de facturación se coordina con él. La eliminación de recursos se hace únicamente después de guardar la evidencia y confirmar que ya no se necesitan.
 
 Después de la calificación, guarda las capturas y confirma el proyecto activo. Estos comandos eliminan el clúster, la VM, la IP reservada y la regla HTTPS de **ese proyecto**. No los ejecutes mientras necesites mostrar el sistema:
 

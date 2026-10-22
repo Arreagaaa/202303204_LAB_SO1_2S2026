@@ -33,7 +33,7 @@ Con esta carga el rendimiento fue parecido y dos réplicas no mejoraron el p95. 
 
 ## Falco
 
-Falco 0.45.1 quedó en un DaemonSet listo con driver modern eBPF. Su imagen, `falcoctl` y el plugin OCI de contenedores con su firma se sirvieron desde Zot. Una lectura de `/app/secretos/comprobacion` dentro de `rabbitmq-0` produjo la alerta personalizada `MUMNK8s intento de leer archivo sensible`, con proceso `cat`, archivo, contenedor, pod y namespace en el registro. El archivo de prueba fue eliminado. Véase [falco.md](falco.md) para repetir la prueba.
+Falco 0.45.1 quedó en un DaemonSet listo con driver modern eBPF. Su imagen, `falcoctl` y el plugin OCI de contenedores con su firma se sirvieron desde Zot. Una lectura de `/app/secretos/comprobacion` dentro de `rabbitmq-0` produjo la alerta personalizada `MUMNK8s intento de leer archivo sensible`, con proceso `cat`, archivo, contenedor, pod y namespace en el registro. El archivo de prueba fue eliminado. El procedimiento para repetirla está en [falco.md](falco.md).
 
 ## Acceso durante la revisión
 

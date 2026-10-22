@@ -4,9 +4,9 @@
 
 ## Monitoreo de Unidades Militares en la Nube con Kubernetes
 
-Proyecto individual del curso Sistemas Operativos 1. La solucion simula la recepcion y el procesamiento de reportes militares generados desde distintos paises. Cada reporte contiene el pais de origen, la cantidad de aviones en el aire, la cantidad de barcos en el agua y la fecha del evento.
+Proyecto individual del curso Sistemas Operativos 1. El sistema simula la recepción y el procesamiento de reportes militares de distintos países. Cada reporte contiene el país de origen, la cantidad de aviones en el aire, la cantidad de barcos en el agua y la fecha del evento.
 
-La arquitectura utiliza una API REST en Rust, servicios internos en Go, comunicacion gRPC, RabbitMQ, Valkey, Grafana, Kubernetes Gateway API, HPA y Locust. El despliegue objetivo es Google Kubernetes Engine (GKE) y las imagenes se publican en un registry Zot externo al cluster.
+La arquitectura utiliza una API REST en Rust, servicios internos en Go, comunicación gRPC, RabbitMQ, Valkey, Grafana, Kubernetes Gateway API, HPA y Locust. El sistema está desplegado en Google Kubernetes Engine (GKE) y las imágenes se publican en un registro Zot externo al clúster.
 
 ## Flujo principal
 
@@ -41,14 +41,14 @@ Grafana
 
 ## Estado del proyecto
 
-El flujo completo funciona en GKE: Zot sirve las imagenes, Gateway enruta a la API, el operador reconcilia Valkey y Grafana, y Prometheus alimenta los doce paneles. La carga de Locust y una alerta real de Falco estan documentadas en [docs/evidencia-gcp.md](docs/evidencia-gcp.md). La entrega en UEDI y la defensa del proyecto siguen siendo pasos del estudiante.
+El flujo completo funciona en GKE: Zot sirve las imágenes, Gateway enruta a la API, el operador reconcilia Valkey y Grafana, y Prometheus alimenta los doce paneles. La carga de Locust y una alerta real de Falco están documentadas en [docs/evidencia-gcp.md](docs/evidencia-gcp.md). Quedan pendientes las capturas, la entrega en UEDI y la defensa del proyecto.
 
 | Componente | Estado |
 |---|---|
 | API REST en Rust | Implementada |
-| Validacion de reportes | Implementada |
+| Validación de reportes | Implementada |
 | Cliente y servidor gRPC | Implementados |
-| Publicacion en RabbitMQ | Implementada |
+| Publicación en RabbitMQ | Implementada |
 | Consumer y almacenamiento en Valkey | Implementados |
 | Manifiestos de Kubernetes | Preparados |
 | Gateway API | Preparado |
@@ -59,15 +59,15 @@ El flujo completo funciona en GKE: Zot sirve las imagenes, Gateway enruta a la A
 | Exporter, Prometheus y dashboard de 12 paneles | Funcionando con datos reales en GKE |
 | CRDs y Custom Resources | Preparados |
 | Regla personalizada de Falco | Alerta comprobada en GKE |
-| Publicacion de imagenes en Zot | Comprobada en HTTPS, incluido artefacto OCI |
+| Publicación de imágenes en Zot | Comprobada en HTTPS, incluido artefacto OCI |
 | Despliegue final en GKE | Activo y validado |
-| Ruta opcional con Dapr | Pendiente |
+| Ruta opcional con Dapr | No implementada |
 
 ## Estructura del repositorio
 
 | Ruta | Responsabilidad |
 |---|---|
-| `api-rust/` | API publica y validacion de reportes |
+| `api-rust/` | API pública y validación de reportes |
 | `go-ingest/`, `go-ingest-client/` | Endpoint REST y cliente gRPC |
 | `go-writer/`, `go-writer-publisher/` | Servidor gRPC y publicador RabbitMQ |
 | `consumer/` | Consumidor RabbitMQ y persistencia en Valkey |
@@ -77,23 +77,23 @@ El flujo completo funciona en GKE: Zot sirve las imagenes, Gateway enruta a la A
 | `metrics/` | Exporter Valkey para Prometheus |
 | `locust/` | Generador de carga |
 | `scripts/` | Validaciones reproducibles desde WSL2 |
-| `docs/` | Documentacion de instalacion, arquitectura y evidencias |
+| `docs/` | Documentación de instalación, arquitectura y evidencias |
 
-## Inicio rapido
+## Inicio rápido
 
-La guia completa se encuentra en [docs/guia-instalacion.md](docs/guia-instalacion.md). Para una validacion local desde WSL2:
+La guía completa está en [docs/guia-instalacion.md](docs/guia-instalacion.md). Para una validación local desde WSL2:
 
 ```bash
 cd Proyecto3
 bash scripts/test-wsl.sh
 ```
 
-Para comprender la arquitectura y el flujo de datos, consultar [docs/manual-tecnico.md](docs/manual-tecnico.md).
+La arquitectura y el flujo de datos se explican en [docs/manual-tecnico.md](docs/manual-tecnico.md).
 
-## Documentacion
+## Documentación
 
-- [Guia de instalacion](docs/guia-instalacion.md)
-- [Manual tecnico](docs/manual-tecnico.md)
+- [Guía de instalación](docs/guia-instalacion.md)
+- [Manual técnico](docs/manual-tecnico.md)
 - [Operator Helm-based](operator/README.md)
 - [Falco](docs/falco.md)
 - [OCI Artifact en Zot](docs/oci-artifact.md)

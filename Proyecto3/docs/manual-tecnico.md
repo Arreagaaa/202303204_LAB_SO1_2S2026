@@ -74,7 +74,7 @@ Valkey :6379
 Exportador de métricas :9091 -> Prometheus :9090 -> Grafana
 ```
 
-El despliegue activo usa GKE Standard zonal y Zot HTTPS en una VM N1 separada. Véase [despliegue-gcp.md](despliegue-gcp.md) para recursos y comandos reproducibles.
+El despliegue activo usa GKE Standard zonal y Zot HTTPS en una VM N1 separada. Los recursos y comandos para repetirlo están en [despliegue-gcp.md](despliegue-gcp.md).
 
 ## 3. Componentes
 
@@ -105,7 +105,7 @@ Ubicación: `go-ingest/`.
 Responsabilidades:
 
 - Recibir el reporte desde Rust.
-- Validar que los campos basicos esten presentes.
+- Validar que los campos básicos estén presentes.
 - Reenviar el JSON al contenedor cliente gRPC del mismo pod.
 - El contenedor `go-ingest-client` convierte el JSON al contrato protobuf e invoca `SendReport` en `go-writer`.
 
@@ -125,7 +125,7 @@ Responsabilidades:
 - Recibir `SendReport` en el contenedor servidor gRPC.
 - Serializar la solicitud y enviarla al contenedor publicador del mismo pod.
 - El contenedor `go-writer-publisher` declara la cola durable `military-reports`, publica mensajes persistentes y espera confirmación de RabbitMQ.
-- Devolver confirmacion al cliente gRPC tras recibirla del broker.
+- Devolver confirmación al cliente gRPC tras recibirla del broker.
 
 ### 3.4. Consumer
 
@@ -160,8 +160,8 @@ RabbitMQ es el broker obligatorio del flujo principal. Se prepara como StatefulS
 Valkey se despliega como StatefulSet con PVC. La configuración incluye:
 
 - AOF para persistencia.
-- Limite de memoria de 256 MB.
-- Politica `allkeys-lru` para evitar saturacion.
+- Límite de memoria de 256 MB.
+- Política `allkeys-lru` para evitar saturación.
 - Service interno en el puerto 6379.
 
 ### 3.7. Grafana
@@ -171,16 +171,16 @@ Grafana se administra mediante un chart Helm. El chart contiene:
 - Deployment.
 - Service.
 - Referencia al Secret externo `grafana-admin` para el acceso administrativo.
-- Configuracion de datasource.
+- Configuración del origen de datos.
 - Provisioning de dashboards.
 
 El origen de datos de Prometheus apunta a `prometheus:9090`. El exportador `metrics` lee las listas `reports:*` de Valkey y publica `/metrics` con máximos, mínimos, modas, totales por país y la última muestra de CHN. Prometheus conserva las muestras para las gráficas temporales. El dashboard tiene doce paneles y usa CHN porque el carné termina en 4. En GKE se abrieron los doce paneles con datos reales; antes de la defensa conviene comprobarlos de nuevo.
 
-## 4. Comunicacion gRPC
+## 4. Comunicación gRPC
 
 El contrato se encuentra en `proto/report.proto`.
 
-El metodo principal es:
+El método principal es:
 
 ```text
 SendReport(WarReportRequest) returns (WarReportResponse)
@@ -204,7 +204,7 @@ El recurso `HTTPRoute` enruta el prefijo `/grpc-202303204` al Service `api-rust`
 
 La API Rust tiene un HPA con:
 
-| Parametro | Valor |
+| Parámetro | Valor |
 |---|---:|
 | Mínimo de réplicas | 1 |
 | Máximo de réplicas | 3 |
@@ -259,7 +259,7 @@ La alerta real se produjo en GKE al leer `/app/secretos/comprobacion` desde `rab
 
 Cada prueba debe registrar:
 
-1. Configuracion de usuarios y tiempo de ejecucion.
+1. Configuración de usuarios y tiempo de ejecución.
 2. Solicitudes por segundo.
 3. Porcentaje de errores.
 4. Latencia promedio y percentiles.

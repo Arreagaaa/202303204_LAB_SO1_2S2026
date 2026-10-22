@@ -4,7 +4,7 @@
 
 ## 1. Objetivo
 
-Esta guía explica cómo preparar el ambiente, validar el código, construir las imágenes, publicarlas en Zot y desplegar los componentes en Kubernetes. Para repetir el despliegue que se probó en GCP, sigue [despliegue-gcp.md](despliegue-gcp.md): allí están el proyecto, la VM de Zot, GKE, las credenciales y los scripts utilizados.
+Esta guía explica cómo preparar el ambiente, validar el código, construir las imágenes, publicarlas en Zot y desplegar los componentes en Kubernetes. El despliegue probado en GCP se describe paso a paso en [despliegue-gcp.md](despliegue-gcp.md), junto con el proyecto, la VM de Zot, GKE, las credenciales y los scripts utilizados.
 
 Los comandos de compilación y validación se ejecutan desde WSL2 cuando el equipo principal es Windows. Los comandos de GCP y Kubernetes también pueden ejecutarse desde Linux con acceso a las credenciales correspondientes.
 
@@ -48,7 +48,7 @@ Para el despliegue final se necesita:
 5. Permisos para crear recursos en GKE y publicar imágenes.
 6. Una GatewayClass compatible con Gateway API en GKE.
 
-Define los nombres del proyecto, clúster, VM, registro y dominio antes de ejecutar los comandos de despliegue.
+Los nombres del proyecto, clúster, VM y registro se definen antes de ejecutar los comandos de despliegue.
 
 ## 3. Preparar el código
 
@@ -225,7 +225,7 @@ Antes de publicar, validar que el certificado HTTPS de Zot sea confiable para Do
 
 ## 6. Configurar las imágenes de Kubernetes
 
-Los manifiestos contienen el dominio de ejemplo `zot.example`. Antes de aplicarlos, reemplazarlo por el dominio real:
+Los manifiestos contienen el nombre de ejemplo `zot.example`. Antes de aplicarlos hay que sustituirlo por el nombre HTTPS de Zot:
 
 ```bash
 sed -i "s#zot.example#$ZOT#g" \
@@ -331,11 +331,11 @@ locust -f locust/locustfile.py --host http://IP_DEL_GATEWAY
 
 Registrar para la evidencia:
 
-- Numero de usuarios.
+- Número de usuarios.
 - Tasa de solicitudes.
 - Porcentaje de errores.
 - Latencia promedio y percentiles.
-- Replicas observadas durante la prueba.
+- Réplicas observadas durante la prueba.
 - Estado del HPA antes, durante y después.
 
 ## 11. Diagnóstico rápido
