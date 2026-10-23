@@ -41,4 +41,4 @@ Consultar los logs:
 kubectl logs -n falco daemonset/falco --since=2m | grep 'MUMNK8s intento de leer archivo sensible'
 ```
 
-El 22 de octubre de 2026, tras actualizar Falco a la revisión Helm 2, GKE registró `command=cat /proc/1/environ`, `file=/proc/1/environ`, `container=api-rust`, `k8s_pod_name=api-rust-5fd9b8d4b8-5ljtb` y `k8s_ns_name=mumnk8s`. La regla y el DaemonSet quedaron listos. La prueba previa desde RabbitMQ permanece como antecedente, pero esta ejecución cumple la condición de usar un pod Rust o Go. Falta únicamente la captura que incorporará el estudiante al manual antes de entregar.
+El 22 de octubre de 2026, tras actualizar Falco a la revisión Helm 2, GKE registró `command=cat /proc/1/environ`, `file=/proc/1/environ`, `container=api-rust`, `k8s_pod_name=api-rust-5fd9b8d4b8-5ljtb` y `k8s_ns_name=mumnk8s`. La regla y el DaemonSet quedaron listos. La prueba previa desde RabbitMQ permanece como antecedente, pero esta ejecución cumple la condición de usar un pod Rust o Go. La captura del ensayo está incluida en [manual-tecnico.md](manual-tecnico.md).

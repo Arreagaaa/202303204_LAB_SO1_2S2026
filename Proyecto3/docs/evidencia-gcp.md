@@ -29,7 +29,7 @@ Se repitió Locust contra el mismo Gateway con 20 usuarios, rampa de 5 usuarios/
 | 1 | 2032 | 0 | 47,88 | 99 ms | 130 ms |
 | 2 | 2136 | 0 | 47,90 | 100 ms | 140 ms |
 
-Con esta carga el rendimiento fue parecido y dos réplicas no mejoraron el p95. Ambos deployments se restauraron a una réplica y quedaron listos; el HPA de Rust conserva `minReplicas=1`, `maxReplicas=3` y objetivo CPU 30 %. La rúbrica también menciona comparar Valkey con una y dos réplicas. Esa prueba no se ha realizado y se consultará al auxiliar antes de cambiar la configuración de persistencia.
+Con esta carga el rendimiento fue parecido y dos réplicas no mejoraron el p95. Ambos deployments se restauraron a una réplica y quedaron listos; el HPA de Rust conserva `minReplicas=1`, `maxReplicas=3` y objetivo CPU 30 %. La comparación de Valkey con un primario solo y un primario más una réplica de datos se realizó localmente; el método, las cifras y sus límites están en [manual-tecnico.md](manual-tecnico.md). No se modificó la instancia activa de GKE.
 
 ## Falco
 
