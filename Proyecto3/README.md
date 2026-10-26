@@ -6,7 +6,7 @@
 
 Proyecto individual del curso Sistemas Operativos 1. El sistema simula la recepción y el procesamiento de reportes militares de distintos países. Cada reporte contiene el país de origen, la cantidad de aviones en el aire, la cantidad de barcos en el agua y la fecha del evento.
 
-La arquitectura utiliza una API REST en Rust, servicios internos en Go, comunicación gRPC, RabbitMQ, Valkey, Grafana, Kubernetes Gateway API, HPA y Locust. El sistema está desplegado en Google Kubernetes Engine (GKE) y las imágenes se publican en un registro Zot externo al clúster.
+La arquitectura utiliza una API REST en Rust, servicios internos en Go, comunicación gRPC, RabbitMQ, Valkey, Grafana, Kubernetes Gateway API, HPA y Locust. El sistema se validó en Google Kubernetes Engine (GKE) con imágenes publicadas en un registro Zot externo al clúster. Ese despliegue documentado puede no seguir activo.
 
 ## Flujo principal
 
@@ -41,7 +41,7 @@ Grafana
 
 ## Estado del proyecto
 
-El flujo completo funciona en GKE: Zot sirve las imágenes, Gateway enruta a la API, el operador reconcilia Valkey y Grafana, y Prometheus alimenta los doce paneles. La carga de Locust y una alerta real de Falco están documentadas en [docs/evidencia-gcp.md](docs/evidencia-gcp.md), con [capturas](docs/evidencias/README.md). Quedan pendientes la entrega en UEDI y la defensa del proyecto.
+El flujo completo se comprobó en GKE: Zot sirvió las imágenes, Gateway enrutó a la API, el operador reconcilió Valkey y Grafana, y Prometheus alimentó los doce paneles. La carga de Locust y una alerta de Falco están documentadas en [docs/evidencia-gcp.md](docs/evidencia-gcp.md), con [capturas](docs/evidencias/README.md).
 
 | Componente | Estado |
 |---|---|
@@ -55,12 +55,12 @@ El flujo completo funciona en GKE: Zot sirve las imágenes, Gateway enruta a la 
 | HPA de Rust | Preparado |
 | Prueba de carga con Locust | Preparada |
 | Charts Helm de Valkey y Grafana | Preparados |
-| Operator Helm, RBAC y watches | Funcionando en GKE; scaffold generado con Operator SDK |
-| Exporter, Prometheus y dashboard de 12 paneles | Funcionando con datos reales en GKE |
+| Operator Helm, RBAC y watches | Validados en GKE; scaffold generado con Operator SDK |
+| Exporter, Prometheus y dashboard de 12 paneles | Validados con datos de la prueba en GKE |
 | CRDs y Custom Resources | Preparados |
-| Regla personalizada de Falco | Alerta comprobada desde `api-rust` en GKE |
+| Regla personalizada de Falco | Alerta comprobada desde `api-rust` durante la prueba en GKE |
 | Publicación de imágenes en Zot | Comprobada en HTTPS, incluido artefacto OCI |
-| Despliegue final en GKE | Activo y validado |
+| Despliegue en GKE | Validado en octubre de 2026; disponibilidad actual no garantizada |
 | Ruta opcional con Dapr | No implementada |
 
 ## Estructura del repositorio
