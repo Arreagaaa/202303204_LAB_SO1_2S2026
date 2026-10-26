@@ -5,9 +5,9 @@ services:
     image: rabbitmq:3.13-management
     environment:
       RABBITMQ_DEFAULT_USER: mumnk8s
-      RABBITMQ_DEFAULT_PASS: x
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?Ejecuta source scripts/local-secrets.sh}
     ports:
-      - "15672:15672"
+      - "127.0.0.1:15672:15672"
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
     healthcheck:
@@ -46,7 +46,7 @@ services:
     restart: unless-stopped
     network_mode: service:go-writer
     environment:
-      RABBITMQ_ADDRESS: amqp://mumnk8s:x@rabbitmq:5672/
+      RABBITMQ_ADDRESS: amqp://mumnk8s:${RABBITMQ_PASSWORD:?Ejecuta source scripts/local-secrets.sh}@rabbitmq:5672/
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -84,7 +84,7 @@ services:
     environment:
       INGEST_URL: http://go-ingest:8081/reports
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     depends_on:
       go-ingest:
         condition: service_started
@@ -96,7 +96,7 @@ services:
     image: mumnk8s/consumer:local
     restart: unless-stopped
     environment:
-      RABBITMQ_ADDRESS: amqp://mumnk8s:x@rabbitmq:5672/
+      RABBITMQ_ADDRESS: amqp://mumnk8s:${RABBITMQ_PASSWORD:?Ejecuta source scripts/local-secrets.sh}@rabbitmq:5672/
       VALKEY_ADDRESS: valkey:6379
     depends_on:
       rabbitmq:
@@ -128,9 +128,9 @@ services:
     image: grafana/grafana:11.2.0
     environment:
       GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: x
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:?Ejecuta source scripts/local-secrets.sh}
     ports:
-      - "3300:3000"
+      - "127.0.0.1:3300:3000"
     volumes:
       - ./metrics/grafana-datasources.local.yml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
       - ./metrics/grafana-dashboards.local.yml:/etc/grafana/provisioning/dashboards/dashboards.yaml:ro

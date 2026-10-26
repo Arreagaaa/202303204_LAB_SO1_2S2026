@@ -6,9 +6,7 @@
 
 ## 1. Interfaz `/proc`
 
-La captura de `/proc/continfo_pr2_so1_202303204` muestra:
-
-![Métricas del módulo en /proc](images/01-proc-metricas.png)
+La salida observada de `/proc/continfo_pr2_so1_202303204` incluyó:
 
 ```text
 MEM_TOTAL_KB:15692004
@@ -21,9 +19,7 @@ El listado contiene procesos del sistema y procesos creados por los contenedores
 
 ## 2. Cronjob y eBPF
 
-La captura de la terminal confirma:
-
-![Cronjob y enlace eBPF](images/02-cronjob-ebpf-link.png)
+La salida de la terminal confirmó:
 
 ```text
 */2 * * * * /bin/bash .../Proyecto2/cronjob/spawn_containers.sh # proyecto2-so1
@@ -36,8 +32,6 @@ Esto demuestra que el daemon instala el cronjob cada dos minutos y que la sonda 
 ## 3. Flujo de eliminación
 
 Durante la prueba se observaron líneas como:
-
-![Confirmación de eliminaciones en el daemon](images/03-daemon-confirmacion-ebpf.png)
 
 ```text
 SIGTERM enviado por el daemon pid=125768 nombre=so1-pr2-4-1789673761

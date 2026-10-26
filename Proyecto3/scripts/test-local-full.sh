@@ -3,6 +3,7 @@ set -Eeuo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
+source "$ROOT/scripts/local-secrets.sh"
 export PATH="$HOME/.local/bin:$PATH"
 
 CLUSTER=mumnk8s-demo
@@ -47,17 +48,17 @@ open_grafana() {
   kubectl --context "$CONTEXT" port-forward -n mumnk8s svc/grafana-dashboard "$grafana_port:3000" >/tmp/mumnk8s-demo-grafana.log 2>&1 &
   PF_PID=$!
   for _ in $(seq 1 20); do
-    if curl -fsS -u admin:x "http://127.0.0.1:$grafana_port/api/health" >/dev/null 2>&1; then break; fi
+    if curl -fsS --netrc-file "$LOCAL_SECRET_DIR/grafana.netrc" "http://127.0.0.1:$grafana_port/api/health" >/dev/null 2>&1; then break; fi
     kill -0 "$PF_PID" 2>/dev/null || { cat /tmp/mumnk8s-demo-grafana.log >&2; exit 1; }
     sleep 1
   done
-  curl -fsS -u admin:x "http://127.0.0.1:$grafana_port/api/search" |
+  curl -fsS --netrc-file "$LOCAL_SECRET_DIR/grafana.netrc" "http://127.0.0.1:$grafana_port/api/search" |
     python3 -c 'import json,sys; assert any(d.get("uid") == "mumnk8s-reports" for d in json.load(sys.stdin)), "Dashboard no encontrado"'
   if [[ "${1:-}" == full ]]; then
     echo "PRUEBA LOCAL COMPLETA: codigo, Compose, Gateway, Locust, HPA, RabbitMQ, Valkey y Grafana OK"
   fi
   echo "Abre Grafana en Windows: http://localhost:$grafana_port/d/mumnk8s-reports/m-u-m-n-k8s-reportes-militares?orgId=1&refresh=10s"
-  echo "Usuario: admin | contrasena local: x"
+  echo "Usuario: admin | contrasena local en $LOCAL_SECRET_DIR/grafana-password"
   echo "Deja esta terminal abierta mientras ves Grafana; Ctrl+C cierra el acceso local."
   wait "$PF_PID"
 }
@@ -101,7 +102,7 @@ bash scripts/load-kind-images.sh "$CLUSTER"
 
 step "Aplicar servicios y recursos locales"
 kubectl --context "$CONTEXT" apply -f k8s/00-namespace.yaml -f k8s/07-crds.yaml
-kubectl --context "$CONTEXT" apply -f k8s/local/rabbitmq-secret.yaml -f k8s/local/grafana-secret.yaml
+bash scripts/apply-local-secrets.sh "$CONTEXT"
 sed 's#zot.example/mumnk8s/rabbitmq:3.13-management#rabbitmq:3.13-management#' k8s/01-rabbitmq.yaml | kubectl --context "$CONTEXT" apply -f -
 kubectl --context "$CONTEXT" apply -f k8s/02-services.yaml -f k8s/05-consumer-valkey.yaml -f k8s/09-operator.yaml
 sed 's#zot.example/mumnk8s/prometheus:v2.54.1#prom/prometheus:v2.54.1#' k8s/10-metrics.yaml | kubectl --context "$CONTEXT" apply -f -

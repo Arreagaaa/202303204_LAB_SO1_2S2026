@@ -22,7 +22,9 @@ El arranque recomendado se hace desde `Proyecto2`. El script levanta Valkey y Gr
 bash start.sh
 ```
 
-Grafana queda disponible en `http://localhost:3001`. El usuario inicial es `admin` y la contraseña inicial es `admin`.
+Grafana queda disponible en `http://localhost:3001`. El usuario inicial es `admin`; `start.sh` genera una contraseña aleatoria en `infra/.env.local`, archivo local ignorado por Git. Si ya existe, conserva la contraseña anterior.
+
+Si se usó antes la contraseña fija de prueba, cambia la contraseña del usuario `admin` en Grafana o elimina el volumen local de Grafana antes de reiniciar. La configuración inicial no cambia automáticamente una cuenta ya creada.
 
 ## 3. Imágenes
 

@@ -1,5 +1,7 @@
 # Guia de Instalacion - Proyecto 1: Desarrollo, Conexion y Gestion de Contenedores en Entornos Virtualizados
 
+Las IP `192.0.2.11`, `192.0.2.12` y `192.0.2.13` son ejemplos de documentación. Sustitúyelas por las IP de tus máquinas antes de ejecutar los comandos. `usuario` representa tu cuenta SSH.
+
 **Curso:** Sistemas Operativos 1  
 **Carnet:** 202303204  
 **Fecha:** 20/08/2026  
@@ -85,7 +87,6 @@ curl http://192.0.2.13:5000/v2/_catalog
 # Salida esperada: {"repositories":["api1-202303204","api2-202303204","api3-202303204"]}
 ```
 
-![Catalogo de Zot](images/06-catalogo-zot.png)
 
 ---
 
@@ -173,7 +174,6 @@ CONTAINER ID    IMAGE                                         COMMAND     STATUS
 d705c32bb8f2    192.0.2.13:5000/API1-202303204:latest    "./main"    Up        0.0.0.0:8081->8081/tcp    api1
 ```
 
-![nerdctl ps en VM1](images/02-vm1-nerdctl-ps.png)
 
 ---
 
@@ -240,7 +240,6 @@ CONTAINER ID  IMAGE                                       COMMAND     CREATED   
 d1562eec1577  192.0.2.13:5000/API3-202303204:latest  ./main      Up 10 seconds  0.0.0.0:8083->8083/tcp  api3
 ```
 
-![podman ps en VM2](images/03-vm2-podman-ps.png)
 
 ---
 
@@ -337,7 +336,6 @@ curl http://192.0.2.13:5000/v2/_catalog
 # Salida esperada: {"repositories":[]}
 ```
 
-![docker ps en VM3](images/04-vm3-docker-ps-zot.png)
 
 ---
 
@@ -389,7 +387,6 @@ curl http://192.0.2.12:8083/api3/202303204/call-api2
 # Salida: {"apiname":"API2","message":"The API2 located on the VM1 is working","connection":true,"carnet":"202303204"}
 ```
 
-![Pruebas de comunicacion entre APIs](images/05-pruebas-comunicacion.png)
 
 ### 6.3 Prueba de Error (API Apagada)
 

@@ -4,7 +4,7 @@ set -Eeuo pipefail
 registry=${1:?Usage: deploy-gke.sh REGISTRY_HOST GKE_ZONE CLUSTER_NAME}
 zone=${2:?Usage: deploy-gke.sh REGISTRY_HOST GKE_ZONE CLUSTER_NAME}
 cluster=${3:?Usage: deploy-gke.sh REGISTRY_HOST GKE_ZONE CLUSTER_NAME}
-project=${GCP_PROJECT_ID:-ID_DEL_PROYECTO}
+project=${GCP_PROJECT_ID:?Define GCP_PROJECT_ID con el proyecto de destino}
 namespace=mumnk8s
 root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 cd "$root"

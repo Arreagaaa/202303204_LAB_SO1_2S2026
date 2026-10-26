@@ -265,9 +265,7 @@ Regla personalizada preparada en `k8s/falco-values.yaml`:
   tags: [mumnk8s, filesystem]
 ```
 
-El 22 de octubre se produjo en GKE una alerta desde el pod `api-rust` al ejecutar `cat /proc/1/environ >/dev/null`. Falco registró el comando, archivo, contenedor, pod y namespace; el contenido sensible no se imprimió. El procedimiento reproducible está en [falco.md](falco.md). La captura muestra la orden y la alerta del mismo ensayo:
-
-![Alerta de Falco desde api-rust](evidencias/falco-api-rust.png)
+El 22 de octubre se produjo en GKE una alerta desde el pod `api-rust` al ejecutar `cat /proc/1/environ >/dev/null`. Falco registró el comando, archivo, contenedor, pod y namespace; el contenido sensible no se imprimió. El procedimiento reproducible está en [falco.md](falco.md). Se retiró la captura de terminal porque exponía el usuario local y detalles del despliegue; esta línea es un ejemplo saneado:
 
 ```text
 17:00:47.577281331: Warning MUMNK8s intento de leer archivo sensible (user=<NA> command=cat /proc/1/environ file=/proc/1/environ container=api-rust) container_id=db6a71364757 container_name=api-rust container_image_repository=203-0-113-10.sslip.io/mumnk8s/api-rust container_image_tag=dev k8s_pod_name=api-rust-5fd9b8d4b8-5ljtb k8s_ns_name=mumnk8s

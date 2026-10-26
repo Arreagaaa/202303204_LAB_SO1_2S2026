@@ -2,9 +2,9 @@
 
 ## Recursos
 
-- Proyecto: `ID_DEL_PROYECTO`
+- Proyecto: ID configurado en `GCP_PROJECT_ID` (se omite aquí)
 - Registro Zot: VM `mumnk8s-zot`, N1 standard 1, `us-central1-a`
-- Registro HTTPS: `203-0-113-10.sslip.io`
+- Registro HTTPS: dirección derivada de la IP reservada (se omite aquí)
 - Clúster GKE Standard: `mumnk8s-gke-c`, N1 standard 2, un nodo zonal en `us-central1-c`
 - Presupuesto: alerta mensual de USD 25 para este proyecto. La alerta **no limita ni detiene** el gasto.
 
@@ -45,7 +45,7 @@ gcloud compute firewall-rules create mumnk8s-zot-https \
   --target-tags=mumnk8s-zot --project "$GCP_PROJECT_ID"
 ```
 
-El nombre de Zot sale de la IP reservada. En esta instalación, `203.0.113.10` se convirtió en `203-0-113-10.sslip.io`. El servicio DNS de `sslip.io` devuelve esa misma IP cuando se consulta el nombre. No se compró un dominio ni se creó una zona de Cloud DNS. Caddy recibe las conexiones por HTTPS en la VM y las envía a Zot, que escucha en `127.0.0.1:5000`. Caddy obtiene y renueva el certificado TLS. El nombre depende de `sslip.io`, mientras que la VM, la IP, el disco y el tráfico pertenecen a la infraestructura de GCP.
+El nombre de Zot sale de la IP reservada. Por ejemplo, la dirección de documentación `203.0.113.10` se convertiría en `203-0-113-10.sslip.io`; sustituye ambos valores por los de tu instalación. El servicio DNS de `sslip.io` devuelve esa misma IP cuando se consulta el nombre. No se compró un dominio ni se creó una zona de Cloud DNS. Caddy recibe las conexiones por HTTPS en la VM y las envía a Zot, que escucha en `127.0.0.1:5000`. Caddy obtiene y renueva el certificado TLS. El nombre depende de `sslip.io`, mientras que la VM, la IP, el disco y el tráfico pertenecen a la infraestructura de GCP.
 
 La red `default` de GCP puede incluir una regla que permita SSH desde cualquier IP. Revisarla y limitarla según la red desde la que se administrará la VM. La VM de Zot no necesita una cuenta de servicio de Google:
 

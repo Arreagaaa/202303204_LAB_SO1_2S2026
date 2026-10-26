@@ -4,7 +4,7 @@
 
 ## Estado verificado
 
-El sistema está desplegado en el proyecto GCP `ID_DEL_PROYECTO`. GKE tiene un nodo listo, Zot HTTPS sirve las imágenes y el Gateway API responde públicamente. La API Rust, los servicios Go, RabbitMQ, consumer, Valkey, Prometheus, Grafana y el operador están listos. Los CR `ValkeyInstance` y `GrafanaInstance` fueron reconciliados. [Evidencia detallada](evidencia-gcp.md).
+El sistema se desplegó en un proyecto GCP privado. GKE tuvo un nodo listo, Zot HTTPS sirvió las imágenes y el Gateway API respondió públicamente. La API Rust, los servicios Go, RabbitMQ, consumer, Valkey, Prometheus, Grafana y el operador estuvieron listos. Los CR `ValkeyInstance` y `GrafanaInstance` fueron reconciliados. [Evidencia detallada](evidencia-gcp.md).
 
 - Locust en GKE: 50 usuarios, 90 segundos, 6569 POST, cero fallos; HPA de Rust pasó de una a dos réplicas.
 - Comparación corta de servicios Go: con 20 usuarios y 45 segundos, una y dos réplicas dieron ~47,9 solicitudes/s sin fallos; dos réplicas no mejoraron el p95. Se restauró una réplica por deployment.

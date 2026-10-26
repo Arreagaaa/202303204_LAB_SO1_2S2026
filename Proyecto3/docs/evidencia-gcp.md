@@ -1,16 +1,16 @@
 # Evidencia de despliegue en GCP
 
-Verificado el 21 de octubre de 2026 (hora de Guatemala) en el proyecto `ID_DEL_PROYECTO`. Estos resultados son una medición puntual; se pueden repetir con [despliegue-gcp.md](despliegue-gcp.md).
+Verificado el 21 de octubre de 2026 (hora de Guatemala) en un proyecto GCP privado. Se omiten el ID y los puntos de acceso; estos resultados son una medición puntual y se pueden repetir con [despliegue-gcp.md](despliegue-gcp.md).
 
 ## Infraestructura y flujo
 
 | Elemento | Resultado observado |
 |---|---|
-| Zot | VM `mumnk8s-zot` N1 standard 1 en `us-central1-a`; HTTPS en `203-0-113-10.sslip.io` |
+| Zot | VM `mumnk8s-zot` N1 standard 1 en `us-central1-a`; HTTPS en un host reservado |
 | Imágenes y artefactos | Imágenes de aplicación, operador, infraestructura y Falco publicadas en Zot; archivo `k8s/00-namespace.yaml` publicado y descargado como artefacto OCI |
 | GKE | Clúster zonal Standard `mumnk8s-gke-c` en `us-central1-c`, un nodo N1 standard 2 `Ready` |
 | Aplicación | Diez pods principales listos; deployments y StatefulSets listos; tres PVC `Bound` |
-| Gateway API | Gateway `Programmed=True`, HTTPRoute aceptada, IP `203.0.113.20`; POST a `/grpc-202303204` respondió `202 Accepted` |
+| Gateway API | Gateway `Programmed=True`, HTTPRoute aceptada; POST a `/grpc-202303204` respondió `202 Accepted` |
 | Operator | CR `ValkeyInstance/reports` y `GrafanaInstance/dashboard` reconciliados, ambos workloads listos |
 | Observabilidad | Prometheus respondió `military_reports_total=6574` y `military_country_reports_total{country="CHN"}=1314` tras la carga. Dashboard Grafana `mumnk8s-reports` con 12 paneles provisionados |
 
@@ -41,7 +41,7 @@ El 22 de octubre se repitió una comprobación mínima del flujo público: un PO
 
 ```bash
 export PATH="$HOME/google-cloud-sdk/bin:$HOME/.local/bin:$PATH"
-gcloud container clusters get-credentials mumnk8s-gke-c --zone us-central1-c --project ID_DEL_PROYECTO
+gcloud container clusters get-credentials mumnk8s-gke-c --zone us-central1-c --project "$GCP_PROJECT_ID"
 kubectl get pods,deployments,statefulsets,hpa,pvc,gateway,httproute -n mumnk8s
 kubectl get valkeyinstances,grafanainstances -n mumnk8s
 kubectl get daemonset,pods -n falco

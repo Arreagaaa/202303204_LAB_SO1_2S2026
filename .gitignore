@@ -1,0 +1,17 @@
+# Archivos locales de credenciales y configuración personal.
+**/.env
+**/.env.*
+!**/.env.example
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/*.kubeconfig
+**/kubeconfig*
+**/*credentials*.json
+**/*service-account*.json
+**/*.secret.yaml
+**/*.secrets.yaml
+**/secrets/
+**/*.tfstate
+**/*.tfstate.*

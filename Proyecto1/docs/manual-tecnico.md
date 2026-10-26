@@ -1,5 +1,7 @@
 # Manual Tecnico - Proyecto 1: Desarrollo, Conexion y Gestion de Contenedores en Entornos Virtualizados
 
+Las direcciones `192.0.2.x` de este documento son ejemplos. Configura las direcciones reales de tu laboratorio fuera de Git.
+
 **Curso:** Sistemas Operativos 1  
 **Carnet:** 202303204  
 **Fecha:** 20/08/2026  
@@ -18,7 +20,6 @@ El proyecto implementa un entorno distribuido con 3 maquinas virtuales, cada una
 
 ### 2.1 Diagrama de Arquitectura
 
-![Arquitectura del Sistema](images/01-arquitectura-sistema.png)
 
 ```
 SISTEMA OPERATIVO LINUX (HOST)
@@ -101,7 +102,6 @@ server = "http://192.0.2.13:5000"
 
 **Contenedores corriendo:**
 
-![nerdctl ps en VM1](images/02-vm1-nerdctl-ps.png)
 
 ### 3.2 VM2 - podman
 
@@ -131,7 +131,6 @@ insecure = true
 
 **Contenedor corriendo:**
 
-![podman ps en VM2](images/03-vm2-podman-ps.png)
 
 ### 3.3 VM3 - Docker + Zot
 
@@ -183,7 +182,6 @@ insecure = true
 
 **Zot corriendo:**
 
-![docker ps en VM3](images/04-vm3-docker-ps-zot.png)
 
 ---
 
@@ -244,7 +242,6 @@ Cuando un usuario solicita `GET /api2/202303204/call-api1`:
 
 **Pruebas de comunicacion:**
 
-![Pruebas de comunicacion entre APIs](images/05-pruebas-comunicacion.png)
 
 ### 4.6 Variables de Entorno
 
@@ -279,7 +276,6 @@ curl http://192.0.2.13:5000/v2/_catalog
 # Salida: {"repositories":["api1-202303204","api2-202303204","api3-202303204"]}
 ```
 
-![Catalogo de Zot](images/06-catalogo-zot.png)
 
 ---
 
@@ -316,14 +312,7 @@ ping -c 3 192.0.2.13
 ├── Proyecto1/
 │   ├── docs/
 │   │   ├── manual-tecnico.md
-│   │   ├── guia-instalacion.md
-│   │   └── images/
-│   │       ├── 01-arquitectura-sistema.png
-│   │       ├── 02-vm1-nerdctl-ps.png
-│   │       ├── 03-vm2-podman-ps.png
-│   │       ├── 04-vm3-docker-ps-zot.png
-│   │       ├── 05-pruebas-comunicacion.png
-│   │       └── 06-catalogo-zot.png
+│   │   └── guia-instalacion.md
 │   ├── api1/
 │   │   ├── main.go
 │   │   ├── go.mod

@@ -16,3 +16,4 @@ ebpf-probe/vmlinux.h
 
 # Go build artifacts
 daemon/daemon
+infra/.env.local

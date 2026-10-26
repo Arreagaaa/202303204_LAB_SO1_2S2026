@@ -91,6 +91,7 @@ El script no crea recursos en GCP. Solo revisa y compila los componentes locales
 Desde la raíz de `Proyecto3`, inicia todo el flujo local:
 
 ```bash
+source scripts/local-secrets.sh
 docker compose -f compose.local.yaml up -d --build
 ```
 
@@ -101,7 +102,9 @@ docker compose -f compose.local.yaml ps
 curl http://localhost:8080/health
 ```
 
-La API queda en `http://localhost:8080`, RabbitMQ Management en `http://localhost:15672` y Grafana en `http://localhost:3300`. El usuario local de RabbitMQ es `mumnk8s` y el de Grafana es `admin`. Ambas contraseñas locales son `x` y solo se usan en esta prueba.
+La API queda en `http://localhost:8080`, RabbitMQ Management en `http://localhost:15672` y Grafana en `http://localhost:3300`. El usuario local de RabbitMQ es `mumnk8s` y el de Grafana es `admin`. El script genera contraseñas aleatorias en `~/.config/mumnk8s-local/`, fuera de Git. Conserva esos archivos mientras uses los volúmenes locales; para ver la contraseña de Grafana, lee `~/.config/mumnk8s-local/grafana-password`.
+
+Si existen volúmenes creados con la contraseña fija antigua, rota las cuentas de RabbitMQ y Grafana antes de reutilizarlos. Para un laboratorio desechable, `docker compose -f compose.local.yaml down -v` elimina los datos locales y permite iniciar con las claves nuevas.
 
 Ejecutar la prueba de carga de un minuto y detener el ambiente:
 
@@ -137,7 +140,7 @@ En WSL se probó un clúster `kind` llamado `mumnk8s-test`. Las herramientas `ki
 kind create cluster --name mumnk8s-test --wait 120s
 bash scripts/load-kind-images.sh mumnk8s-test
 kubectl --context kind-mumnk8s-test apply -f k8s/00-namespace.yaml -f k8s/07-crds.yaml
-kubectl --context kind-mumnk8s-test apply -f k8s/local/rabbitmq-secret.yaml -f k8s/local/grafana-secret.yaml
+bash scripts/apply-local-secrets.sh kind-mumnk8s-test
 sed 's#zot.example/mumnk8s/rabbitmq:3.13-management#rabbitmq:3.13-management#' k8s/01-rabbitmq.yaml | kubectl --context kind-mumnk8s-test apply -f -
 kubectl --context kind-mumnk8s-test apply -f k8s/02-services.yaml -f k8s/05-consumer-valkey.yaml -f k8s/09-operator.yaml
 sed 's#zot.example/mumnk8s/prometheus:v2.54.1#prom/prometheus:v2.54.1#' k8s/10-metrics.yaml | kubectl --context kind-mumnk8s-test apply -f -
@@ -233,7 +236,7 @@ sed -i "s#zot.example#$ZOT#g" \
   k8s/09-operator.yaml k8s/10-metrics.yaml
 ```
 
-Los `values.yaml` del operador se ajustan antes de construir su imagen porque se copian dentro de ella. Los manifiestos de producción no incluyen contraseñas: crea `rabbitmq-credentials` y `grafana-admin` en el namespace `mumnk8s` con claves reales fuera de Git, antes de instalar los servicios. Los secretos en `k8s/local/` usan credenciales desechables exclusivamente para kind.
+Los `values.yaml` del operador se ajustan antes de construir su imagen porque se copian dentro de ella. Los manifiestos de producción no incluyen contraseñas: crea `rabbitmq-credentials` y `grafana-admin` en el namespace `mumnk8s` con claves reales fuera de Git, antes de instalar los servicios. Para kind, `scripts/apply-local-secrets.sh` genera y aplica credenciales aleatorias desde archivos locales fuera de Git.
 
 Revisar los cambios antes de continuar:
 
@@ -248,7 +251,7 @@ Configurar primero el contexto de kubectl:
 ```bash
 gcloud container clusters get-credentials NOMBRE_DEL_CLUSTER \
   --region REGION \
-  --project ID_DEL_PROYECTO
+  --project "$GCP_PROJECT_ID"
 ```
 
 Aplicar los manifiestos en orden:

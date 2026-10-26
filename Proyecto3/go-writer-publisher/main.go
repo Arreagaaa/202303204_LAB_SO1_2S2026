@@ -51,7 +51,7 @@ func (p *publisher) publish(ctx context.Context, body []byte) error {
 func main() {
 	address := os.Getenv("RABBITMQ_ADDRESS")
 	if address == "" {
-		address = "amqp://guest:x@rabbitmq:5672/"
+		log.Fatal("RABBITMQ_ADDRESS es obligatorio")
 	}
 	queue := os.Getenv("RABBITMQ_QUEUE")
 	if queue == "" {

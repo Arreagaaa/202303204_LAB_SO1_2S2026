@@ -4,6 +4,12 @@ set -euo pipefail
 DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$DIR"
 
+umask 077
+if [[ ! -f infra/.env.local ]]; then
+    command -v openssl >/dev/null || { echo "Falta openssl para generar la clave local de Grafana" >&2; exit 1; }
+    printf 'GF_SECURITY_ADMIN_PASSWORD=%s\n' "$(openssl rand -hex 24)" > infra/.env.local
+fi
+
 echo "========================================="
 echo "  Proyecto 2 - Inicio completo"
 echo "========================================="
@@ -51,5 +57,5 @@ echo "  Todo listo. Para iniciar el daemon:"
 echo "  cd $DIR && sudo ./daemon/daemon -interval 30s"
 echo ""
 echo "  Grafana: http://localhost:3001"
-echo "  Credenciales: admin / x"
+echo "  Usuario: admin; contraseña en infra/.env.local (archivo local ignorado por Git)"
 echo "========================================="
