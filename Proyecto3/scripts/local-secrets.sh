@@ -22,4 +22,5 @@ RABBITMQ_PASSWORD="$(<"$LOCAL_SECRET_DIR/rabbitmq-password")"
 GRAFANA_PASSWORD="$(<"$LOCAL_SECRET_DIR/grafana-password")"
 printf 'amqp://mumnk8s:%s@rabbitmq:5672/' "$RABBITMQ_PASSWORD" > "$LOCAL_SECRET_DIR/rabbitmq-uri"
 printf 'machine 127.0.0.1 login admin password %s\n' "$GRAFANA_PASSWORD" > "$LOCAL_SECRET_DIR/grafana.netrc"
+chmod 600 "$LOCAL_SECRET_DIR"/*
 export RABBITMQ_PASSWORD GRAFANA_PASSWORD LOCAL_SECRET_DIR

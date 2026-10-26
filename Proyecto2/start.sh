@@ -9,6 +9,7 @@ if [[ ! -f infra/.env.local ]]; then
     command -v openssl >/dev/null || { echo "Falta openssl para generar la clave local de Grafana" >&2; exit 1; }
     printf 'GF_SECURITY_ADMIN_PASSWORD=%s\n' "$(openssl rand -hex 24)" > infra/.env.local
 fi
+chmod 600 infra/.env.local
 
 echo "========================================="
 echo "  Proyecto 2 - Inicio completo"
